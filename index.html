@@ -1019,33 +1019,47 @@ function parseSTL(buf){
   return {pos,nor,idx};
 }
 let pdfLibPromise=null;
+const PDFJS_BASE='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function withTimeout(p,ms,what){
+  return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(what+' timed out')),ms))]);
+}
 function loadPdfLib(){
   if(pdfLibPromise) return pdfLibPromise;
-  pdfLibPromise=new Promise((res,rej)=>{
-    const sc=document.createElement('script');
-    sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    sc.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){}
-      res(window.pdfjsLib); };
-    sc.onerror=()=>rej(new Error('pdf.js blocked'));
-    document.head.appendChild(sc);
-  });
+  pdfLibPromise=(async()=>{
+    if(!window.pdfjsLib){
+      await withTimeout(new Promise((res,rej)=>{
+        const sc=document.createElement('script');
+        sc.src=PDFJS_BASE+'pdf.min.js';
+        sc.onload=res; sc.onerror=()=>rej(new Error('pdf.js blocked'));
+        document.head.appendChild(sc);
+      }),12000,'loading pdf.js');
+    }
+    const lib=window.pdfjsLib;
+    if(!lib) throw new Error('pdf.js missing');
+    // A worker cannot be started from another origin, so fetch the script and run it
+    // from a blob on this one. Without this pdf.js falls back to a path that hangs.
+    const r=await withTimeout(fetch(PDFJS_BASE+'pdf.worker.min.js',{mode:'cors'}),12000,'fetching the pdf worker');
+    if(!r.ok) throw new Error('pdf worker unavailable');
+    lib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(await r.blob());
+    return lib;
+  })();
+  pdfLibPromise.catch(()=>{ pdfLibPromise=null; });   // let a later attempt retry
   return pdfLibPromise;
 }
 async function canvasFromPDF(file){
   const lib=await loadPdfLib();
-  const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;
-  const page=await doc.getPage(1);
+  const doc=await withTimeout(lib.getDocument({data:await file.arrayBuffer()}).promise,15000,'reading the PDF');
+  const page=await withTimeout(doc.getPage(1),10000,'reading page 1');
   const base=page.getViewport({scale:1});
   const scale=Math.min(2400/base.width, 1700/base.height, 8);
   const vp=page.getViewport({scale:Math.max(scale,.4)});
-  const cv=document.createElement('canvas');
   const M=60;
+  const cv=document.createElement('canvas');
   cv.width=Math.ceil(vp.width)+M*2; cv.height=Math.ceil(vp.height)+M*2;
   const c=cv.getContext('2d',{willReadFrequently:true});
   c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
   c.translate(M,M);
-  await page.render({canvasContext:c,viewport:vp}).promise;
+  await withTimeout(page.render({canvasContext:c,viewport:vp}).promise,20000,'drawing the PDF');
   return cv;
 }
 function canvasFromImage(file){
@@ -1077,8 +1091,8 @@ async function loadLogoFile(file){
     showMsg(file.name+' loaded. Raise the model dial, and the round slider softens its edges.',6500);
   }catch(e){
     showMsg(n.endsWith('.pdf')
-      ? 'Could not read that PDF. A flattened, vector logo works best.'
-      : 'Could not read that logo file.',6000);
+      ? 'Could not read that PDF here. Export the logo as SVG or PNG and load that instead.'
+      : 'Could not read that logo file.',8000);
   }
 }
 async function loadMeshFile(file){

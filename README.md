@@ -52,20 +52,21 @@ length never changes.
 
 The second row under the modes is the 3D deformer. A mesh is drawn off screen every frame
 into a surface-normal and depth buffer, and the field is refracted through it, so the picture
-bends around a real object rather than a flat mask. Ten are built in:
+bends around a real object rather than a flat mask. Eleven are built in:
 
 | object | what it is |
 |---|---|
+| Text | anything you type, rastered then domed into a rounded solid. Eight typefaces, and a slider for how soft the edges are |
 | accretion a | the accretion.tv letterform, generated from the logo's own vector measurements |
 | Knot | a trefoil, swept as a tube |
-| Infinity | a lemniscate of Bernoulli, lifted out of plane so it reads as solid |
+| Infinity | a lemniscate of Gerono, so both lobes stay round rather than pinching to points |
 | Concentric | six nested rings, each tipped further over, like an armillary |
 | Mobius | a Mobius strip: one surface, one edge |
 | Harmonic | a spherical-harmonic surface, the standing waves of a vibrating sphere |
 | Klein | the figure-eight immersion of a Klein bottle, a surface with no inside |
 | Supershape | the Gielis superformula, the one equation behind many natural outlines |
 | Torus | the plain case |
-| Load 3D | your own `.obj` or `.stl` |
+| Load .OBJ / .STL | your own model. Wavefront `.obj` and `.stl`, binary or ASCII |
 
 **Drag to spin it.** Press and drag anywhere to orbit the object; it keeps turning when you
 let go. **Scroll to dolly**: the camera physically moves toward it, so perspective opens up as

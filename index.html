@@ -1,6 +1,6 @@
 <title>Phosphene</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=B612:ital,wght@0,400;0,700;1,400&family=B612+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=B612:ital,wght@0,400;0,700;1,400&family=B612+Mono:wght@400;700&family=Anton&family=Bungee&family=Playfair+Display:wght@700;900&family=Pacifico&display=swap">
 <style>
   :root{
     --ground:#050608;
@@ -66,6 +66,21 @@
   .modes .row.shapes .div{flex:none;width:1px;margin:6px 9px;background:var(--line);align-self:stretch}
   .modes .row button.sober.on{background:var(--amber2)}
   .modes .row button.sober.on::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .textpanel{display:flex;align-items:center;gap:0;background:rgba(11,14,19,.9);border:1px solid var(--line);backdrop-filter:blur(12px)}
+  .textpanel[hidden]{display:none}
+  .textpanel input[type=text]{font-family:var(--display);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);
+    background:transparent;border:0;border-right:1px solid var(--line);padding:8px 10px;width:15ch;outline:none}
+  .textpanel input[type=text]:focus{background:rgba(255,177,74,.08)}
+  .textpanel select{font-family:var(--display);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);
+    background:transparent;border:0;border-right:1px solid var(--line);padding:8px 8px;outline:none;cursor:pointer}
+  .textpanel select option{background:#0b0e13;color:#d9e4ee}
+  .textpanel .rnd{display:flex;align-items:center;gap:7px;padding:6px 10px;font-family:var(--display);font-size:7px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .textpanel .rnd input{appearance:none;width:64px;height:12px;margin:0;background:transparent;cursor:pointer}
+  .textpanel .rnd input::-webkit-slider-runnable-track{height:1px;background:var(--line2)}
+  .textpanel .rnd input::-webkit-slider-thumb{appearance:none;width:6px;height:12px;margin-top:-6px;background:var(--panel2);border:1px solid var(--amber)}
+  .textpanel .rnd input::-moz-range-track{height:1px;background:var(--line2)}
+  .textpanel .rnd input::-moz-range-thumb{width:6px;height:12px;border-radius:0;background:var(--panel2);border:1px solid var(--amber)}
   .modes .note{font-family:var(--cockpit);font-size:12.5px;line-height:1.5;text-align:center;max-width:56ch;text-wrap:balance;color:var(--ink);padding:6px 12px;background:rgba(5,6,8,.6);border-left:2px solid var(--cyan);opacity:0;transition:opacity .8s}
   .modes .note.show{opacity:.95}
 
@@ -145,6 +160,20 @@
 <nav class="modes" id="modes">
   <div class="row" id="modeRow"></div>
   <div class="row shapes" id="shapeRow"></div>
+  <div class="textpanel" id="textPanel" hidden>
+    <input id="textInput" type="text" maxlength="16" value="a" spellcheck="false" aria-label="Text to build">
+    <select id="textFont" aria-label="Typeface">
+      <option value="Michroma">Michroma</option>
+      <option value="Anton">Anton</option>
+      <option value="Bungee">Bungee</option>
+      <option value="&quot;Playfair Display&quot;">Playfair</option>
+      <option value="Pacifico">Pacifico</option>
+      <option value="&quot;B612 Mono&quot;">B612 Mono</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Impact">Impact</option>
+    </select>
+    <label class="rnd">round <input id="textRound" type="range" min="4" max="40" value="16"></label>
+  </div>
   <div class="note" id="modeNote"></div>
 </nav>
 
@@ -198,7 +227,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load 3D</b> in the shape row and choose an <b>.obj</b> or <b>.stl</b>. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. A dozen objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
@@ -243,6 +272,7 @@ const PKEYS=Object.keys(ANCHOR);
 const SHAPES=[{k:'circle',label:'Circle',sides:0,star:0},{k:'tri',label:'Triangle',sides:3,star:0},{k:'square',label:'Square',sides:4,star:0},{k:'penta',label:'Pentagon',sides:5,star:0},{k:'hex',label:'Hexagon',sides:6,star:0},{k:'star',label:'Star',sides:5,star:.85},{k:'flower',label:'Flower',sides:6,star:-.55}];
 const OBJECTS=[
  {k:'none',label:'None'},
+ {k:'text',label:'Text',text:true},
  {k:'a',label:'accretion a',gen:()=>meshAccretionA()},
  {k:'knot',label:'Knot',gen:()=>meshTorusKnot()},
  {k:'infinity',label:'Infinity',gen:()=>meshInfinity()},
@@ -252,7 +282,7 @@ const OBJECTS=[
  {k:'klein',label:'Klein',gen:()=>meshKlein()},
  {k:'super',label:'Supershape',gen:()=>meshSupershape()},
  {k:'torus',label:'Torus',gen:()=>meshTorus(.72,.26,220,40)},
- {k:'load',label:'Load 3D',load:true},
+ {k:'load',label:'Load .OBJ / .STL',load:true},
 ];
 let shapeName='circle',objectName='none';
 const DEFAULT_SHAPE='circle';
@@ -755,9 +785,10 @@ function meshSurface(fn,NU,NV){
 // ---- the objects ----
 // Lemniscate of Bernoulli, lifted out of plane so it reads as a solid figure of eight.
 function meshInfinity(){
-  return meshTube(t=>{const a=t*Math.PI*2,d=1+Math.sin(a)*Math.sin(a);
-    return [1.15*Math.cos(a)/d, 1.15*Math.sin(a)*Math.cos(a)/d, .30*Math.sin(2*a)];},
-    420,26,.115,true);
+  // Lemniscate of Gerono: both lobes stay round instead of pinching to points.
+  return meshTube(t=>{const a=t*Math.PI*2;
+    return [1.02*Math.cos(a), .62*Math.sin(2*a)/2, .16*Math.sin(2*a)];},
+    460,30,.235,true);
 }
 // Nested rings, each tipped a little further over, like an armillary.
 function meshConcentric(){
@@ -799,6 +830,68 @@ function meshSupershape(){
     const r1=sf(ph,.2,1.7,1.7,7),r2=sf(th,.2,1.7,1.7,7);
     const k=1.0;
     return [k*r1*Math.cos(ph)*r2*Math.cos(th), k*r2*Math.sin(th), k*r1*Math.sin(ph)*r2*Math.cos(th)];},240,240);
+}
+
+// Build a rounded solid from typed text. The glyphs are rastered, a chamfer distance
+// transform gives the distance to the nearest edge, and that drives a domed height field,
+// so the letters have real curved edges for the field to refract through.
+function meshText(str,fontCss,roundPx){
+  str=(str||'').trim(); if(!str) str='a';
+  const H=190, RND=Math.max(3,roundPx||16);
+  const probe=document.createElement('canvas').getContext('2d');
+  probe.font=H+'px '+fontCss;
+  const wpx=Math.max(20,Math.ceil(probe.measureText(str).width));
+  const pad=Math.ceil(RND*1.6)+8;
+  const W=wpx+pad*2, Hh=Math.ceil(H*1.55)+pad*2;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=Hh;
+  const c=cv.getContext('2d',{willReadFrequently:true});
+  c.fillStyle='#000'; c.fillRect(0,0,W,Hh);
+  c.font=H+'px '+fontCss; c.textAlign='center'; c.textBaseline='middle';
+  c.fillStyle='#fff'; c.fillText(str,W/2,Hh/2);
+  const img=c.getImageData(0,0,W,Hh).data;
+  const BIG=1e9, D=new Float32Array(W*Hh);
+  for(let i=0,pI=0;i<D.length;i++,pI+=4) D[i]= img[pI]>110 ? BIG : 0;
+  const a1=1, b1=1.4142136;
+  for(let y=1;y<Hh;y++)for(let x=1;x<W-1;x++){const i=y*W+x;
+    D[i]=Math.min(D[i],D[i-1]+a1,D[i-W]+a1,D[i-W-1]+b1,D[i-W+1]+b1);}
+  for(let y=Hh-2;y>=0;y--)for(let x=W-2;x>0;x--){const i=y*W+x;
+    D[i]=Math.min(D[i],D[i+1]+a1,D[i+W]+a1,D[i+W+1]+b1,D[i+W-1]+b1);}
+  // domed height: a quarter circle rising from the edge to the full thickness
+  const hAt=i=>{const t=Math.min(D[i]/RND,1);return Math.sqrt(Math.max(0,1-(1-t)*(1-t)));};
+  const STEP=Math.max(2,Math.round(Math.max(W,Hh)/230));
+  const GX=Math.floor((W-1)/STEP), GY=Math.floor((Hh-1)/STEP);
+  const sc=2/Math.max(W,Hh), TH=RND*sc*0.92;
+  const pos=[],nor=[],idx=[];
+  const gi=new Int32Array((GX+1)*(GY+1)).fill(-1);
+  const gj=new Int32Array((GX+1)*(GY+1)).fill(-1);
+  const hOf=(gx,gy)=>{const x=Math.min(W-1,gx*STEP),y=Math.min(Hh-1,gy*STEP);return hAt(y*W+x);};
+  for(let gy=0;gy<=GY;gy++)for(let gx=0;gx<=GX;gx++){
+    const h=hOf(gx,gy);
+    const hx=hOf(Math.min(GX,gx+1),gy)-hOf(Math.max(0,gx-1),gy);
+    const hy=hOf(gx,Math.min(GY,gy+1))-hOf(gx,Math.max(0,gy-1));
+    const px=(gx*STEP-W/2)*sc, py=-(gy*STEP-Hh/2)*sc, pz=h*TH;
+    const g=2*STEP*sc;
+    let nx=-hx*TH/g, ny=hy*TH/g, nz=1;
+    const L=Math.hypot(nx,ny,nz)||1;
+    const k=(GX+1)*gy+gx;
+    gi[k]=pos.length/3; pos.push(px,py,pz);  nor.push(nx/L,ny/L,nz/L);
+    gj[k]=pos.length/3; pos.push(px,py,-pz); nor.push(nx/L,ny/L,-nz/L);
+  }
+  for(let gy=0;gy<GY;gy++)for(let gx=0;gx<GX;gx++){
+    const k00=(GX+1)*gy+gx,k10=k00+1,k01=k00+GX+1,k11=k01+1;
+    const any=hOf(gx,gy)>0||hOf(gx+1,gy)>0||hOf(gx,gy+1)>0||hOf(gx+1,gy+1)>0;
+    if(!any)continue;
+    idx.push(gi[k00],gi[k01],gi[k10], gi[k10],gi[k01],gi[k11]);
+    idx.push(gj[k00],gj[k10],gj[k01], gj[k10],gj[k11],gj[k01]);
+  }
+  if(!idx.length) throw new Error('empty text');
+  return {pos,nor,idx};
+}
+async function buildTextObject(){
+  const str=$('textInput').value, font=$('textFont').value, rnd=+$('textRound').value;
+  try{ await document.fonts.load('190px '+font, str||'a'); }catch(e){}
+  try{ uploadMesh(meshText(str,font,rnd), 'text'); objectName='text'; markObject('text'); }
+  catch(e){ showMsg('Nothing to build from that text.',3500); }
 }
 
 function uploadMesh(m,name){
@@ -897,7 +990,7 @@ async function loadMeshFile(file){
     let m;
     if(name.endsWith('.obj')) m=parseOBJ(await file.text());
     else if(name.endsWith('.stl')) m=parseSTL(await file.arrayBuffer());
-    else { showMsg('Use an .obj or .stl file.',5000); return; }
+    else { showMsg('Phosphene reads Wavefront .obj and .stl only. Export your model as one of those and try again.',7000); return; }
     if(!m.idx.length){ showMsg('That file had no triangles in it.',5000); return; }
     if(m.idx.length>1500000){ showMsg('That mesh is very heavy. Decimate it and try again.',6000); return; }
     uploadMesh(m,file.name);
@@ -1377,17 +1470,25 @@ function setShape(k){
 const divider=document.createElement('i');divider.className='div';shapeRow.appendChild(divider);
 const objectRow=shapeRow;
 OBJECTS.forEach(ob=>{const b=document.createElement('button');b.textContent=ob.label;b.dataset.obj=ob.k;
-  b.title=ob.load?'Load your own .obj or .stl':`Refract the field through a ${ob.label.toLowerCase()}`;
+  b.title=ob.load?'Load your own 3D file. Wavefront .obj or .stl, binary or ASCII.':`Refract the field through a ${ob.label.toLowerCase()}`;
   b.onclick=()=>setObject(ob.k);objectRow.appendChild(b);});
 function markObject(k){shapeRow.querySelectorAll('button[data-obj]').forEach(b=>b.classList.toggle('on',b.dataset.obj===k));}
 function setObject(k){
   const ob=OBJECTS.find(x=>x.k===k);
   if(ob&&ob.load){ $('meshFile').click(); return; }
+  $('textPanel').hidden = !(ob&&ob.text);
+  if(ob&&ob.text){ objectName='text'; markObject('text'); buildTextObject(); $('textInput').focus(); $('textInput').select(); return; }
   if(k==='none'){ hasModel=false; }
   else if(ob&&ob.gen){ try{ uploadMesh(ob.gen(), ob.label); }catch(err){ showMsg('Could not build that object.',4000); return; } }
   objectName=k; markObject(k);
 }
 $('meshFile').onchange=e=>{const f=e.target.files[0];if(f)loadMeshFile(f);e.target.value='';};
+let textT;
+function textChanged(){clearTimeout(textT);textT=setTimeout(buildTextObject,260);}
+$('textInput').addEventListener('input',textChanged);
+$('textFont').addEventListener('change',buildTextObject);
+$('textRound').addEventListener('input',textChanged);
+$('textInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buildTextObject();e.target.blur();}e.stopPropagation();});
 setShape(DEFAULT_SHAPE);
 setObject(DEFAULT_OBJECT);
 function setAnchor(on){anchorOn=on;if(on)anchorSince=performance.now()/1000;

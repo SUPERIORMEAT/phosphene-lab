@@ -59,6 +59,7 @@ bends around a real object rather than a flat mask. Eleven are built in:
 | Text | anything you type, rastered then domed into a rounded solid. Eight typefaces, and a slider for how soft the edges are |
 | accretion a | the accretion.tv letterform, generated from the logo's own vector measurements |
 | Knot | a trefoil, swept as a tube |
+| Lotus | five rings of petals opening outward, each a cupped tapering surface on a Bezier spine, with the seed pod at the centre |
 | Infinity | a lemniscate of Gerono, so both lobes stay round rather than pinching to points |
 | Concentric | six nested rings, each tipped further over, like an armillary |
 | Mobius | a Mobius strip: one surface, one edge |

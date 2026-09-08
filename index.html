@@ -230,7 +230,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
@@ -278,6 +278,7 @@ const OBJECTS=[
  {k:'text',label:'Text',text:true},
  {k:'a',label:'accretion a',gen:()=>meshAccretionA()},
  {k:'knot',label:'Knot',gen:()=>meshTorusKnot()},
+ {k:'lotus',label:'Lotus',gen:()=>meshLotus()},
  {k:'infinity',label:'Infinity',gen:()=>meshInfinity()},
  {k:'concentric',label:'Concentric',gen:()=>meshConcentric()},
  {k:'mobius',label:'Mobius',gen:()=>meshMobius()},
@@ -813,6 +814,42 @@ function meshMobius(){
     const r=1+w*.5*Math.cos(a/2);
     return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},340,30);
 }
+// A lotus: five rings of petals opening outward, each petal a cupped, tapering surface
+// swept along a Bezier spine, plus the seed pod at the centre. The flower's axis runs
+// along Z so it is seen face on.
+function meshLotusPetal(az,o,halfW,curl){
+  const ca=Math.cos(az), sa=Math.sin(az);
+  const b=[.05+.06*o, .34-.30*o];      // base of the spine, in radius and height
+  const c=[.14+.42*o, .62-.18*o];      // control point
+  const d=[.20+.85*o, .80-.72*o];      // tip
+  const bez=(t,p0,p1,p2)=>{const m=1-t;return m*m*p0+2*m*t*p1+t*t*p2;};
+  return meshSurface((u,v)=>{
+    const t=u, vv=(v-.5)*2;
+    const w=halfW*Math.pow(Math.sin(Math.PI*Math.pow(t,.82)),.85);   // widest mid petal, pointed tip
+    const r=bez(t,b[0],c[0],d[0]) + curl*.05*vv*vv*t;
+    const z=bez(t,b[1],c[1],d[1]) + .17*w*vv*vv                      // cupped across
+            + .012*Math.sin(t*Math.PI*3.0)*(1-Math.abs(vv));         // a faint keel
+    const y=w*vv;
+    return [r*ca - y*sa, r*sa + y*ca, z];
+  },46,20);
+}
+function meshLotus(){
+  const parts=[];
+  const RINGS=5;
+  for(let i=0;i<RINGS;i++){
+    const o=i/(RINGS-1);
+    const n=6+i*3;
+    const halfW=.098+.05*o;
+    for(let k=0;k<n;k++){
+      const az=(k/n)*Math.PI*2 + i*0.41;      // stagger each ring against the last
+      parts.push(meshLotusPetal(az,o,halfW,1-o*.6));
+    }
+  }
+  // the seed pod
+  parts.push(meshSurface((u,v)=>{const th=u*Math.PI*.5, ph=v*Math.PI*2, r=.135;
+    return [r*Math.sin(th)*Math.cos(ph), r*Math.sin(th)*Math.sin(ph), .31+.085*Math.cos(th)];},22,44));
+  return meshMerge(parts);
+}
 // A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
 function meshHarmonic(){
   const m=[4,3,4,3,4,3,2,3];
@@ -847,7 +884,7 @@ function meshSupershape(){
 // so the letters have real curved edges for the field to refract through.
 function meshText(str,fontCss,roundPx){
   str=(str||'').trim(); if(!str) str='a';
-  const H=280, RND=Math.max(3,Math.round((roundPx||16)*280/190));
+  const H=620, RND=Math.max(6,Math.round((roundPx||16)*620/190));
   const probe=document.createElement('canvas').getContext('2d');
   probe.font=H+'px '+fontCss;
   const wpx=Math.max(20,Math.ceil(probe.measureText(str).width));
@@ -875,20 +912,28 @@ function meshFromMask(inside,W,Hh,RND){
     D[i]=Math.min(D[i],D[i+1]+a1,D[i+W]+a1,D[i+W+1]+b1,D[i+W-1]+b1);}
   // domed height: a quarter circle rising from the edge to the full thickness
   const hAt=i=>{const t=Math.min(D[i]/RND,1);return Math.sqrt(Math.max(0,1-(1-t)*(1-t)));};
-  const GRID=340, MAXQ=130000;
-  let STEP=Math.max(1,Math.round(Math.max(W,Hh)/GRID));
-  while((W/STEP)*(Hh/STEP)>MAXQ) STEP++;
-  const GX=Math.floor((W-1)/STEP), GY=Math.floor((Hh-1)/STEP);
-  const sc=2/Math.max(W,Hh), TH=RND*sc*0.92;
+  // Grid only what the glyph occupies. Gridding the whole canvas spent most of the
+  // triangle budget on empty margin, which is what made the letterforms look coarse.
+  let x0=W,y0=Hh,x1=-1,y1=-1;
+  for(let y=0;y<Hh;y++){const r=y*W;
+    for(let x=0;x<W;x++) if(D[r+x]>0){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }}
+  if(x1<0) throw new Error('nothing to build');
+  x0=Math.max(0,x0-2); y0=Math.max(0,y0-2); x1=Math.min(W-1,x1+2); y1=Math.min(Hh-1,y1+2);
+  const CW=x1-x0+1, CH=y1-y0+1;
+  const GRID=560, MAXQ=200000;
+  let STEP=Math.max(1,Math.round(Math.max(CW,CH)/GRID));
+  while((CW/STEP)*(CH/STEP)>MAXQ) STEP++;
+  const GX=Math.floor((CW-1)/STEP), GY=Math.floor((CH-1)/STEP);
+  const sc=2/Math.max(CW,CH), TH=RND*sc*0.92;
   const pos=[],nor=[],idx=[];
   const gi=new Int32Array((GX+1)*(GY+1)).fill(-1);
   const gj=new Int32Array((GX+1)*(GY+1)).fill(-1);
-  const hOf=(gx,gy)=>{const x=Math.min(W-1,gx*STEP),y=Math.min(Hh-1,gy*STEP);return hAt(y*W+x);};
+  const hOf=(gx,gy)=>{const x=Math.min(W-1,x0+gx*STEP),y=Math.min(Hh-1,y0+gy*STEP);return hAt(y*W+x);};
   for(let gy=0;gy<=GY;gy++)for(let gx=0;gx<=GX;gx++){
     const h=hOf(gx,gy);
     const hx=hOf(Math.min(GX,gx+1),gy)-hOf(Math.max(0,gx-1),gy);
     const hy=hOf(gx,Math.min(GY,gy+1))-hOf(gx,Math.max(0,gy-1));
-    const px=(gx*STEP-W/2)*sc, py=-(gy*STEP-Hh/2)*sc, pz=h*TH;
+    const px=(gx*STEP-CW/2)*sc, py=-(gy*STEP-CH/2)*sc, pz=h*TH;
     const g=2*STEP*sc;
     let nx=-hx*TH/g, ny=hy*TH/g, nz=1;
     const L=Math.hypot(nx,ny,nz)||1;

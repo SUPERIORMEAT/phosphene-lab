@@ -210,9 +210,6 @@
   <div class="group">
     <label class="knob">spiral <input type="range" id="spiral" min="0" max="100" value="0"></label>
     <label class="knob">zoom <input type="range" id="zoom" min="0" max="100" value="25"></label>
-    <label class="knob">twist <input type="range" id="twist" min="-100" max="100" value="0"></label>
-    <label class="knob">bulge <input type="range" id="bulge" min="-100" max="100" value="0"></label>
-    <label class="knob">ripple <input type="range" id="rippleD" min="-100" max="100" value="0"></label>
     <label class="knob">model <input type="range" id="modelAmt" min="0" max="100" value="55"></label>
   </div>
   <div class="group">
@@ -232,7 +229,6 @@
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
   <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
-  <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
   <p><b>It follows the song.</b> A build, a drop and a breakdown are detected from the energy of the last sixteen seconds. On the drop the mirrors double, the spiral jumps and the color flips to its complement for a bar. Every eighth bar, time slows for two beats. Tonal passages flow, noisy ones fracture. The melody travels down the tunnel as a glowing thread. Old shapes fade into their complementary color, like real afterimages. A living skin, a reaction-diffusion system, breeds under the geometry with the bass and mids. Wide stereo pulls the two halves apart. Kicks split the colors for an instant.</p>
   <p><b>Hands.</b> The picture leans toward the cursor. Click to drop a ripple there. Hold the button to open a gravity well that pulls the field in. Drag sideways to spin, drag up and down to dive or back out. Scroll to dive faster or reverse. Pinch, or hold <kbd>ctrl</kbd> while scrolling, to add or remove mirrors. Double-click for fullscreen. The console is never affected.</p>
@@ -313,7 +309,7 @@ uniform vec2 uMouse;
 uniform vec2 uRes;
 uniform float uFlow;
 uniform float uSub,uBass,uMid,uHigh,uAir,uLoud,uBeat,uPan,uPunch,uSpin,uReact,uSnare,uHat,uEvo,uDir,uBassWarp,uSpiral,uSpiralPhase;
-uniform float uSides,uStar,uTwist,uBulge,uRippleD;
+uniform float uSides,uStar;
 uniform sampler2D uModel;
 uniform float uModelAmt;
 uniform float uHue,uSym,uCentroid,uAnchor,uBreath,uDepth,uDrift;
@@ -381,10 +377,6 @@ void main(){
       rr=length(p);
     }
   }
-  // ---- deformers ----
-  if(abs(uTwist)>.001) p=rot(uTwist*2.4*rr*(1.+.9*uBass*uReact))*p;
-  if(abs(uBulge)>.001) p*=1.+uBulge*(.9+.8*uPunch*uReact)*exp(-rr*rr*2.6);
-  if(abs(uRippleD)>.001) p*=1.+uRippleD*.26*sin(rr*13.-t*2.2+3.*uBass*uReact);
   // kaleidoscope, fractional symmetry blend, fractal second fold
   float u;
   vec2 k=fold(p,uSym,uSpin,u);
@@ -1525,7 +1517,7 @@ function frame(nowMs){
   govern(rawMs,nowMs);
   analyse(dt,now);
   const depth=$('depth').value/100,drift=$('drift').value/100,react=0.3+1.4*($('react').value/100),bassWarp=2*($('bassWarp').value/100),spiral=$('spiral').value/100,zoom=$('zoom').value/100,
-        twist=$('twist').value/100,bulge=$('bulge').value/100,rippleD=$('rippleD').value/100,modelAmt=$('modelAmt').value/100;
+        modelAmt=$('modelAmt').value/100;
   // preset smoothing, anchor blend
   anchor+=((anchorOn?1:0)-anchor)*Math.min(1,dt*0.8);
   const M=MODES[modeName];const k=Math.min(1,dt*0.9);
@@ -1578,7 +1570,6 @@ function frame(nowMs){
   gl.uniform1f(u.uLoud,loud);gl.uniform1f(u.uBeat,beat);gl.uniform1f(u.uPan,pan);gl.uniform1f(u.uPunch,punch*(1-anchor));gl.uniform1f(u.uSpin,spin);gl.uniform1f(u.uReact,react*(1-0.7*anchor));gl.uniform1f(u.uSnare,snare*(1-anchor));gl.uniform1f(u.uHat,hat*(1-anchor));gl.uniform1f(u.uEvo,evo);gl.uniform1f(u.uDir,dir);gl.uniform1f(u.uBassWarp,bassWarp*(1-0.6*anchor));gl.uniform1f(u.uSpiral,spiral*(1-0.7*anchor));gl.uniform1f(u.uSpiralPhase,spiralPhase);
   gl.uniform1f(u.uSides,sides);gl.uniform1f(u.uStar,star);
   gl.uniform1f(u.uModelAmt,(hasModel&&modelFbOk)?modelAmt*(1-anchor):0);
-  gl.uniform1f(u.uTwist,twist*(1-anchor));gl.uniform1f(u.uBulge,bulge*(1-anchor));gl.uniform1f(u.uRippleD,rippleD*(1-anchor));
   gl.uniform1f(u.uDrop,drop*(1-anchor));gl.uniform1f(u.uSparse,sparse);gl.uniform1f(u.uNoisy,noisy*(1-anchor));gl.uniform1f(u.uZoomPhase,zoomPhase);gl.uniform1f(u.uZoom,zoom*(1-0.6*anchor));
   gl.uniform1f(u.uSkin,P.skin*(0.5+0.5*react));gl.uniform1f(u.uAfter,P.after*(1-anchor));gl.uniform1f(u.uStereo,stereoW);gl.uniform1f(u.uSlow,timeScale);gl.uniform1f(u.uMelody,1-anchor);
   gl.uniform4fv(u.uMel,melBuf);gl.uniform1i(u.uMelN,melPts.length);

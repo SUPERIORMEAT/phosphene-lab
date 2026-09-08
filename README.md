@@ -37,10 +37,6 @@ pull and detail.
 The row under the modes folds the whole field onto a **circle, triangle, square, pentagon,
 hexagon, star or flower**, changing the geometry everything else is built on.
 
-**Twist** rotates the field more the further out you go. **Bulge** swells the centre, or
-pinches it left of zero. **Ripple** runs concentric waves outward. All three rest at zero in
-the middle of their travel and take the music with them.
-
 **A 3D file.** Press **Load 3D** and choose an `.obj` or `.stl`. The mesh is drawn off screen
 every frame and the field is refracted through its surface normals and depth, so the
 kaleidoscope behaves as though lit through a glass version of your object. **Knot** is built
@@ -81,7 +77,7 @@ square, pentagon, hexagon, star or flower, and works with or without an object l
 
 `depth` trail length · `drift` rotation · `react` how hard the music moves the image ·
 `bass` how far the low end bends the deep background · `spiral` vortex speed · `zoom` the
-endless log-polar fall · `twist` `bulge` `ripple` the deformers · `model` how hard the 3D
+endless log-polar fall · `model` how hard the 3D
 object bites.
 
 ## Hands

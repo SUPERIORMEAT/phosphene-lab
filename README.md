@@ -52,7 +52,7 @@ length never changes.
 
 The second row under the modes is the 3D deformer. A mesh is drawn off screen every frame
 into a surface-normal and depth buffer, and the field is refracted through it, so the picture
-bends around a real object rather than a flat mask. Twelve are built in:
+bends around a real object rather than a flat mask. Ten are built in:
 
 | object | what it is |
 |---|---|
@@ -61,8 +61,6 @@ bends around a real object rather than a flat mask. Twelve are built in:
 | Infinity | a lemniscate of Bernoulli, lifted out of plane so it reads as solid |
 | Concentric | six nested rings, each tipped further over, like an armillary |
 | Mobius | a Mobius strip: one surface, one edge |
-| Helix | a double helix with rungs between the strands |
-| Lorenz | the Lorenz attractor, integrated and swept. Chaotic, never repeats |
 | Harmonic | a spherical-harmonic surface, the standing waves of a vibrating sphere |
 | Klein | the figure-eight immersion of a Klein bottle, a surface with no inside |
 | Supershape | the Gielis superformula, the one equation behind many natural outlines |

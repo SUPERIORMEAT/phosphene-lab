@@ -62,7 +62,8 @@
   .modes .row.shapes{background:rgba(11,14,19,.7)}
   .modes .row.shapes button{padding:5px 10px;font-size:7px;color:var(--dim)}
   .modes .row.shapes button.on{background:rgba(143,211,255,.12);color:var(--cyan)}
-  .modes .row.objects button.on{background:rgba(255,177,74,.14);color:var(--amber)}
+  .modes .row.shapes button[data-obj].on{background:rgba(255,177,74,.14);color:var(--amber)}
+  .modes .row.shapes .div{flex:none;width:1px;margin:6px 9px;background:var(--line);align-self:stretch}
   .modes .row button.sober.on{background:var(--amber2)}
   .modes .row button.sober.on::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .modes .note{font-family:var(--cockpit);font-size:12.5px;line-height:1.5;text-align:center;max-width:56ch;text-wrap:balance;color:var(--ink);padding:6px 12px;background:rgba(5,6,8,.6);border-left:2px solid var(--cyan);opacity:0;transition:opacity .8s}
@@ -144,7 +145,6 @@
 <nav class="modes" id="modes">
   <div class="row" id="modeRow"></div>
   <div class="row shapes" id="shapeRow"></div>
-  <div class="row shapes objects" id="objectRow"></div>
   <div class="note" id="modeNote"></div>
 </nav>
 
@@ -198,7 +198,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load 3D</b> in the shape row and choose an <b>.obj</b> or <b>.stl</b>. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. A dozen objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a double <b>Helix</b>, the <b>Lorenz</b> attractor, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load 3D</b> in the shape row and choose an <b>.obj</b> or <b>.stl</b>. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. A dozen objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
@@ -248,8 +248,6 @@ const OBJECTS=[
  {k:'infinity',label:'Infinity',gen:()=>meshInfinity()},
  {k:'concentric',label:'Concentric',gen:()=>meshConcentric()},
  {k:'mobius',label:'Mobius',gen:()=>meshMobius()},
- {k:'helix',label:'Helix',gen:()=>meshHelix()},
- {k:'lorenz',label:'Lorenz',gen:()=>meshLorenz()},
  {k:'harmonic',label:'Harmonic',gen:()=>meshHarmonic()},
  {k:'klein',label:'Klein',gen:()=>meshKlein()},
  {k:'super',label:'Supershape',gen:()=>meshSupershape()},
@@ -678,11 +676,12 @@ function meshMerge(list){
 // Stem: 30.90 wide by 212.58 tall at x 411.57, y 222.47.
 function meshAccretionA(){
   const S=1/220, X=v=>(v-329)*S, Y=v=>-(v-328.8)*S;
-  const bowlR=(109.38+82.19)/2, bowlT=(109.38-82.19)/2;   // mean radius and half thickness
-  const stemH=212.58, stemW=30.90;
+  const FAT=1.85;                                         // heavier strokes, same bowl radius
+  const bowlR=(109.38+82.19)/2, bowlT=(109.38-82.19)/2*FAT;
+  const stemH=212.58, stemW=30.90*FAT;
   const parts=[
-    meshTransform(meshTorus(bowlR*S, bowlT*S, 220, 30), X(325.67), Y(328.76), 0),
-    meshTransform(meshBox(stemW*S, stemH*S, bowlT*2*S), X(411.57+stemW/2), Y(222.47+stemH/2), 0),
+    meshTransform(meshTorus(bowlR*S, bowlT*S, 220, 34), X(325.67), Y(328.76), 0),
+    meshTransform(meshBox(stemW*S, stemH*S, bowlT*2.1*S), X(411.57+30.90/2), Y(222.47+stemH/2), 0),
   ];
   return meshMerge(parts);
 }
@@ -774,37 +773,6 @@ function meshConcentric(){
   }
   return meshMerge(parts);
 }
-// A Mobius strip: one surface, one edge.
-function meshMobius(){
-  return meshSurface((u,v)=>{const a=u*Math.PI*2,w=(v-.5)*.62;
-    const r=1+w*.5*Math.cos(a/2);
-    return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},340,30);
-}
-// Double helix with rungs between the strands.
-function meshHelix(){
-  const TURNS=3.2,H=1.9;
-  const strand=off=>meshTube(t=>{const a=t*Math.PI*2*TURNS+off;
-    return [.55*Math.cos(a), t*H-H/2, .55*Math.sin(a)];},440,18,.075,false);
-  const parts=[strand(0),strand(Math.PI)];
-  for(let k=0;k<=22;k++){
-    const t=k/22,a=t*Math.PI*2*TURNS,y=t*H-H/2;
-    parts.push(meshTube(u=>{const aa=a+u*Math.PI;
-      return [.55*Math.cos(aa), y, .55*Math.sin(aa)];},18,12,.032,false));
-  }
-  return meshMerge(parts);
-}
-// The Lorenz attractor, integrated then swept. Chaotic, never repeats.
-function meshLorenz(){
-  const sig=10,rho=28,bet=8/3,dt=.0038,N=4200;
-  let x=.1,y=0,z=0;const pts=[];
-  for(let i=0;i<600;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;x+=dx*dt;y+=dy*dt;z+=dz*dt;}
-  for(let i=0;i<N;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;
-    x+=dx*dt;y+=dy*dt;z+=dz*dt;pts.push([x*.05,(z-25)*.05,y*.05]);}
-  return meshTube(t=>{const f=t*(pts.length-1),i=Math.min(pts.length-2,Math.floor(f)),k=f-i;
-    const a=pts[i],b=pts[i+1];
-    return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];},1700,16,.026,false);
-}
-// A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
 function meshHarmonic(){
   const m=[4,3,4,3,4,3,2,3];
   return meshSurface((u,v)=>{const th=u*Math.PI,ph=v*Math.PI*2;
@@ -1404,13 +1372,14 @@ SHAPES.forEach(sp=>{const b=document.createElement('button');b.textContent=sp.la
   b.title=`Fold the field onto a ${sp.label.toLowerCase()}`;b.onclick=()=>setShape(sp.k);shapeRow.appendChild(b);});
 function setShape(k){
   shapeName=k;
-  shapeRow.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.shape===k));
+  shapeRow.querySelectorAll('button[data-shape]').forEach(b=>b.classList.toggle('on',b.dataset.shape===k));
 }
-const objectRow=$('objectRow');
+const divider=document.createElement('i');divider.className='div';shapeRow.appendChild(divider);
+const objectRow=shapeRow;
 OBJECTS.forEach(ob=>{const b=document.createElement('button');b.textContent=ob.label;b.dataset.obj=ob.k;
   b.title=ob.load?'Load your own .obj or .stl':`Refract the field through a ${ob.label.toLowerCase()}`;
   b.onclick=()=>setObject(ob.k);objectRow.appendChild(b);});
-function markObject(k){objectRow.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.obj===k));}
+function markObject(k){shapeRow.querySelectorAll('button[data-obj]').forEach(b=>b.classList.toggle('on',b.dataset.obj===k));}
 function setObject(k){
   const ob=OBJECTS.find(x=>x.k===k);
   if(ob&&ob.load){ $('meshFile').click(); return; }

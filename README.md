@@ -56,6 +56,7 @@ bends around a real object rather than a flat mask. Eleven are built in:
 | accretion a | the accretion.tv letterform, generated from the logo's own vector measurements |
 | Knot | a trefoil, swept as a tube |
 | Lotus | five rings of petals opening outward, each a cupped tapering surface on a Bezier spine, with the seed pod at the centre |
+| Mandala | carved relief rather than a drawing: concentric bands of 8, 16, 24 and 12 fold symmetry over a raised centre, closing into one medallion at the rim |
 | Infinity | a lemniscate of Gerono, so both lobes stay round rather than pinching to points |
 | Concentric | six nested rings, each tipped further over, like an armillary |
 | Mobius | a Mobius strip: one surface, one edge |

@@ -227,7 +227,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Mandala</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
   <p><b>It follows the song.</b> A build, a drop and a breakdown are detected from the energy of the last sixteen seconds. On the drop the mirrors double, the spiral jumps and the color flips to its complement for a bar. Every eighth bar, time slows for two beats. Tonal passages flow, noisy ones fracture. The melody travels down the tunnel as a glowing thread. Old shapes fade into their complementary color, like real afterimages. A living skin, a reaction-diffusion system, breeds under the geometry with the bass and mids. Wide stereo pulls the two halves apart. Kicks split the colors for an instant.</p>
@@ -275,6 +275,7 @@ const OBJECTS=[
  {k:'a',label:'accretion a',gen:()=>meshAccretionA()},
  {k:'knot',label:'Knot',gen:()=>meshTorusKnot()},
  {k:'lotus',label:'Lotus',gen:()=>meshLotus()},
+ {k:'mandala',label:'Mandala',gen:()=>meshMandala()},
  {k:'infinity',label:'Infinity',gen:()=>meshInfinity()},
  {k:'concentric',label:'Concentric',gen:()=>meshConcentric()},
  {k:'mobius',label:'Mobius',gen:()=>meshMobius()},
@@ -694,7 +695,8 @@ function meshTransform(m,tx,ty,tz,sx){
 function meshMerge(list){
   const pos=[],nor=[],idx=[];
   for(const m of list){const off=pos.length/3;
-    pos.push(...m.pos);nor.push(...m.nor);for(const i of m.idx)idx.push(i+off);}
+    for(let i=0;i<m.pos.length;i++){pos.push(m.pos[i]);nor.push(m.nor[i]);}
+    for(let i=0;i<m.idx.length;i++)idx.push(m.idx[i]+off);}
   return {pos,nor,idx};
 }
 // The accretion.tv "a" on its own, taken from the real vector measurements
@@ -841,6 +843,31 @@ function meshLotus(){
   parts.push(meshSurface((u,v)=>{const th=u*Math.PI*.5, ph=v*Math.PI*2, r=.135;
     return [r*Math.sin(th)*Math.cos(ph), r*Math.sin(th)*Math.sin(ph), .31+.085*Math.cos(th)];},22,44));
   return meshMerge(parts);
+}
+// A mandala, carved as relief rather than drawn. Height is a function of radius and angle:
+// concentric bands, each with its own rotational symmetry, over a raised centre, fading to
+// nothing at the rim so the front and back faces close into one medallion.
+function meshMandala(){
+  const TW=Math.PI*2;
+  const band=(r,c,w)=>Math.exp(-((r-c)/w)*((r-c)/w));
+  const lobes=(a,n,p)=>Math.pow(Math.abs(Math.cos(n*a*.5)),p);
+  function hgt(r,a){
+    if(r>=1) return 0;
+    let z=.34*Math.exp(-(r/.085)*(r/.085));      // the centre point
+    z+=.10*band(r,.150,.030);                    // ring line
+    z+=.17*band(r,.235,.055)*lobes(a,8,1.5);     // eight petals
+    z+=.09*band(r,.335,.028);                    // ring line
+    z+=.13*band(r,.435,.075)*lobes(a,16,2.2);    // sixteen rays
+    z+=.08*band(r,.545,.026);                    // ring line
+    z+=.12*band(r,.645,.062)*lobes(a,24,3.0);    // twenty four beads
+    z+=.16*band(r,.795,.085)*lobes(a,12,1.2);    // twelve outer petals
+    z+=.11*band(r,.925,.032);                    // rim band
+    return z*Math.pow(Math.max(0,1-Math.pow(r,6)),.55);
+  }
+  const NU=140, NV=560;
+  const face=k=>meshSurface((u,v)=>{const r=u,a=v*TW;
+    return [r*Math.cos(a), r*Math.sin(a), hgt(r,a)*k];},NU,NV);
+  return meshMerge([face(1), face(-.42)]);
 }
 // A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
 function meshHarmonic(){

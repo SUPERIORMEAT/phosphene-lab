@@ -909,7 +909,11 @@ function meshFromMask(inside,W,Hh,RND){
 // A logo: render it to a canvas, decide what counts as ink, then use the same solid builder.
 function meshFromCanvas(cv,RND){
   const W=cv.width,Hh=cv.height;
-  const d=cv.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,Hh).data;
+  // copy into a read-optimised canvas: the source was drawn on the GPU path for speed
+  const rc=document.createElement('canvas'); rc.width=W; rc.height=Hh;
+  const rctx=rc.getContext('2d',{willReadFrequently:true});
+  rctx.drawImage(cv,0,0);
+  const d=rctx.getImageData(0,0,W,Hh).data;
   let anyAlpha=false;
   for(let i=3;i<d.length;i+=4*97){ if(d[i]<250){anyAlpha=true;break;} }
   const inside=new Uint8Array(W*Hh);
@@ -1020,8 +1024,19 @@ function parseSTL(buf){
 }
 let pdfLibPromise=null;
 const PDFJS_BASE='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+// A timeout that only counts time the tab is actually drawing. pdf.js schedules its
+// render loop on animation frames, which a background tab does not run, so a plain
+// timer would wrongly report failure the moment someone switches away mid-load.
 function withTimeout(p,ms,what){
-  return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(what+' timed out')),ms))]);
+  return new Promise((res,rej)=>{
+    let waited=0,done=false;
+    p.then(v=>{done=true;res(v);},e=>{done=true;rej(e);});
+    const iv=setInterval(()=>{
+      if(done){clearInterval(iv);return;}
+      if(!document.hidden) waited+=250;
+      if(waited>=ms){clearInterval(iv);rej(new Error(what+' timed out'));}
+    },250);
+  });
 }
 function loadPdfLib(){
   if(pdfLibPromise) return pdfLibPromise;
@@ -1056,10 +1071,10 @@ async function canvasFromPDF(file){
   const M=60;
   const cv=document.createElement('canvas');
   cv.width=Math.ceil(vp.width)+M*2; cv.height=Math.ceil(vp.height)+M*2;
-  const c=cv.getContext('2d',{willReadFrequently:true});
+  const c=cv.getContext('2d');
   c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
   c.translate(M,M);
-  await withTimeout(page.render({canvasContext:c,viewport:vp}).promise,20000,'drawing the PDF');
+  await withTimeout(page.render({canvasContext:c,viewport:vp}).promise,45000,'drawing the PDF');
   return cv;
 }
 function canvasFromImage(file){

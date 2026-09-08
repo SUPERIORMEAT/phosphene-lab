@@ -253,7 +253,7 @@ const OBJECTS=[
  {k:'harmonic',label:'Harmonic',gen:()=>meshHarmonic()},
  {k:'klein',label:'Klein',gen:()=>meshKlein()},
  {k:'super',label:'Supershape',gen:()=>meshSupershape()},
- {k:'torus',label:'Torus',gen:()=>meshTorus(.72,.26,140,26)},
+ {k:'torus',label:'Torus',gen:()=>meshTorus(.72,.26,220,40)},
  {k:'load',label:'Load 3D',load:true},
 ];
 let shapeName='circle',objectName='none';
@@ -587,23 +587,41 @@ function programVF(vsSrc,fsSrc){
 const modelProg=programVF(MODEL_VS,MODEL_FS);
 
 let modelVao=null,modelVbo=null,modelIbo=null,modelCount=0,hasModel=false,modelName='';
-let mFbo=null,mTex=null,mDepth=null,mW=0,mH=0;
+let mFbo=null,mTex=null,mDepth=null,mW=0,mH=0,modelFloat=true,modelFbOk=false;
 let mrx=0,mry=0,dolly=3.2,dollyTarget=3.2,orbVx=0,orbVy=0,orbiting=false;
 
 function modelTargets(){
-  const w=Math.max(64,Math.min(1024,Math.round(W*0.42))), h=Math.max(64,Math.round(H*0.42));
+  // Full field resolution. The normals drive a displacement, so any softness here shows up
+  // directly in the picture; and 8-bit normals terrace, hence RGBA16F when it is available.
+  const cap=2560;
+  const sc=Math.min(1, cap/Math.max(W,H));
+  const w=Math.max(64,Math.round(W*sc)), h=Math.max(64,Math.round(H*sc));
   if(w===mW&&h===mH&&mFbo)return;
   if(mTex){gl.deleteTexture(mTex);gl.deleteFramebuffer(mFbo);gl.deleteRenderbuffer(mDepth);}
   mW=w;mH=h;
   mTex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,mTex);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  if(halfFloat&&modelFloat) gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA16F,w,h,0,gl.RGBA,gl.HALF_FLOAT,null);
+  else          gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   mDepth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,mDepth);
-  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,w,h);
   mFbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,mFbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,mTex,0);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,mDepth);
+  // Some drivers refuse a float colour attachment. Fall back rather than render nothing.
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE && modelFloat){
+    modelFloat=false;
+    gl.bindTexture(gl.TEXTURE_2D,mTex);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,mTex,0);
+  }
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){
+    gl.bindRenderbuffer(gl.RENDERBUFFER,mDepth);
+    gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,mDepth);
+  }
+  modelFbOk = gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
 }
 
@@ -663,13 +681,13 @@ function meshAccretionA(){
   const bowlR=(109.38+82.19)/2, bowlT=(109.38-82.19)/2;   // mean radius and half thickness
   const stemH=212.58, stemW=30.90;
   const parts=[
-    meshTransform(meshTorus(bowlR*S, bowlT*S, 128, 16), X(325.67), Y(328.76), 0),
+    meshTransform(meshTorus(bowlR*S, bowlT*S, 220, 30), X(325.67), Y(328.76), 0),
     meshTransform(meshBox(stemW*S, stemH*S, bowlT*2*S), X(411.57+stemW/2), Y(222.47+stemH/2), 0),
   ];
   return meshMerge(parts);
 }
 function meshTorusKnot(){
-  const pos=[],nor=[],idx=[],SEG=220,RING=14,p=2,q=3,tr=.26;
+  const pos=[],nor=[],idx=[],SEG=380,RING=24,p=2,q=3,tr=.26;
   const pt=t=>{const r=.7+.32*Math.cos(q*t);return [r*Math.cos(p*t),r*Math.sin(p*t),.32*Math.sin(q*t)];};
   for(let i=0;i<=SEG;i++){const t=i/SEG*Math.PI*2;
     const c=pt(t),n1=pt(t+.01);
@@ -740,14 +758,14 @@ function meshSurface(fn,NU,NV){
 function meshInfinity(){
   return meshTube(t=>{const a=t*Math.PI*2,d=1+Math.sin(a)*Math.sin(a);
     return [1.15*Math.cos(a)/d, 1.15*Math.sin(a)*Math.cos(a)/d, .30*Math.sin(2*a)];},
-    260,14,.115,true);
+    420,26,.115,true);
 }
 // Nested rings, each tipped a little further over, like an armillary.
 function meshConcentric(){
   const parts=[];
   for(let k=0;k<6;k++){
     const R=.30+k*.145, th=k*.26;
-    const m=meshTorus(R,.032+.006*k,110,10);
+    const m=meshTorus(R,.032+.006*k,170,18);
     const c=Math.cos(th),si=Math.sin(th);
     for(let i=0;i<m.pos.length;i+=3){
       const y=m.pos[i+1],z=m.pos[i+2];m.pos[i+1]=y*c-z*si;m.pos[i+2]=y*si+z*c;
@@ -760,31 +778,31 @@ function meshConcentric(){
 function meshMobius(){
   return meshSurface((u,v)=>{const a=u*Math.PI*2,w=(v-.5)*.62;
     const r=1+w*.5*Math.cos(a/2);
-    return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},220,16);
+    return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},340,30);
 }
 // Double helix with rungs between the strands.
 function meshHelix(){
   const TURNS=3.2,H=1.9;
   const strand=off=>meshTube(t=>{const a=t*Math.PI*2*TURNS+off;
-    return [.55*Math.cos(a), t*H-H/2, .55*Math.sin(a)];},300,10,.075,false);
+    return [.55*Math.cos(a), t*H-H/2, .55*Math.sin(a)];},440,18,.075,false);
   const parts=[strand(0),strand(Math.PI)];
   for(let k=0;k<=22;k++){
     const t=k/22,a=t*Math.PI*2*TURNS,y=t*H-H/2;
     parts.push(meshTube(u=>{const aa=a+u*Math.PI;
-      return [.55*Math.cos(aa), y, .55*Math.sin(aa)];},14,7,.032,false));
+      return [.55*Math.cos(aa), y, .55*Math.sin(aa)];},18,12,.032,false));
   }
   return meshMerge(parts);
 }
 // The Lorenz attractor, integrated then swept. Chaotic, never repeats.
 function meshLorenz(){
-  const sig=10,rho=28,bet=8/3,dt=.006,N=2600;
+  const sig=10,rho=28,bet=8/3,dt=.0038,N=4200;
   let x=.1,y=0,z=0;const pts=[];
   for(let i=0;i<600;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;x+=dx*dt;y+=dy*dt;z+=dz*dt;}
   for(let i=0;i<N;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;
     x+=dx*dt;y+=dy*dt;z+=dz*dt;pts.push([x*.05,(z-25)*.05,y*.05]);}
   return meshTube(t=>{const f=t*(pts.length-1),i=Math.min(pts.length-2,Math.floor(f)),k=f-i;
     const a=pts[i],b=pts[i+1];
-    return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];},900,8,.028,false);
+    return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];},1700,16,.026,false);
 }
 // A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
 function meshHarmonic(){
@@ -795,14 +813,14 @@ function meshHarmonic(){
          +Math.pow(Math.abs(Math.sin(m[4]*th)),m[5])
          +Math.pow(Math.abs(Math.cos(m[6]*th)),m[7]);
     r*=.42;
-    return [r*Math.sin(th)*Math.cos(ph), r*Math.cos(th), r*Math.sin(th)*Math.sin(ph)];},150,150);
+    return [r*Math.sin(th)*Math.cos(ph), r*Math.cos(th), r*Math.sin(th)*Math.sin(ph)];},230,230);
 }
 // Figure-eight immersion of a Klein bottle: a surface with no inside.
 function meshKlein(){
   return meshSurface((uu,vv)=>{const u=uu*Math.PI*2,v=vv*Math.PI*2,a=1.1;
     const c=a+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u);
     return [.62*c*Math.cos(v), .62*c*Math.sin(v),
-            .62*(Math.sin(v/2)*Math.sin(u)+Math.cos(v/2)*Math.sin(2*u))];},170,110);
+            .62*(Math.sin(v/2)*Math.sin(u)+Math.cos(v/2)*Math.sin(2*u))];},260,170);
 }
 // Gielis superformula, the one equation behind a great many natural outlines.
 function meshSupershape(){
@@ -812,7 +830,7 @@ function meshSupershape(){
   return meshSurface((u,v)=>{const th=(u-.5)*Math.PI,ph=(v-.5)*Math.PI*2;
     const r1=sf(ph,.2,1.7,1.7,7),r2=sf(th,.2,1.7,1.7,7);
     const k=1.0;
-    return [k*r1*Math.cos(ph)*r2*Math.cos(th), k*r2*Math.sin(th), k*r1*Math.sin(ph)*r2*Math.cos(th)];},160,160);
+    return [k*r1*Math.cos(ph)*r2*Math.cos(th), k*r2*Math.sin(th), k*r1*Math.sin(ph)*r2*Math.cos(th)];},240,240);
 }
 
 function uploadMesh(m,name){
@@ -1327,7 +1345,7 @@ function frame(nowMs){
   gl.uniform1f(u.uSub,env[0]);gl.uniform1f(u.uBass,env[1]);gl.uniform1f(u.uMid,env[2]);gl.uniform1f(u.uHigh,env[3]);gl.uniform1f(u.uAir,env[4]);
   gl.uniform1f(u.uLoud,loud);gl.uniform1f(u.uBeat,beat);gl.uniform1f(u.uPan,pan);gl.uniform1f(u.uPunch,punch*(1-anchor));gl.uniform1f(u.uSpin,spin);gl.uniform1f(u.uReact,react*(1-0.7*anchor));gl.uniform1f(u.uSnare,snare*(1-anchor));gl.uniform1f(u.uHat,hat*(1-anchor));gl.uniform1f(u.uEvo,evo);gl.uniform1f(u.uDir,dir);gl.uniform1f(u.uBassWarp,bassWarp*(1-0.6*anchor));gl.uniform1f(u.uSpiral,spiral*(1-0.7*anchor));gl.uniform1f(u.uSpiralPhase,spiralPhase);
   gl.uniform1f(u.uSides,sides);gl.uniform1f(u.uStar,star);
-  gl.uniform1f(u.uModelAmt,hasModel?modelAmt*(1-anchor):0);
+  gl.uniform1f(u.uModelAmt,(hasModel&&modelFbOk)?modelAmt*(1-anchor):0);
   gl.uniform1f(u.uTwist,twist*(1-anchor));gl.uniform1f(u.uBulge,bulge*(1-anchor));gl.uniform1f(u.uRippleD,rippleD*(1-anchor));
   gl.uniform1f(u.uDrop,drop*(1-anchor));gl.uniform1f(u.uSparse,sparse);gl.uniform1f(u.uNoisy,noisy*(1-anchor));gl.uniform1f(u.uZoomPhase,zoomPhase);gl.uniform1f(u.uZoom,zoom*(1-0.6*anchor));
   gl.uniform1f(u.uSkin,P.skin*(0.5+0.5*react));gl.uniform1f(u.uAfter,P.after*(1-anchor));gl.uniform1f(u.uStereo,stereoW);gl.uniform1f(u.uSlow,timeScale);gl.uniform1f(u.uMelody,1-anchor);
@@ -1452,16 +1470,18 @@ window.PHOSPHENE={loadArrayBuffer:async ab=>{ensureCtx();buffer=await ctx.decode
   setMode:setModeName,setShape:(k)=>setShape(k),setObject:(k)=>setObject(k),
   // debug: read the model's coverage mask back as a small grid
   readModelMask:(cols)=>{cols=cols||56;if(!hasModel||!mFbo)return null;
-    const px=new Uint8Array(mW*mH*4);gl.bindFramebuffer(gl.FRAMEBUFFER,mFbo);
-    gl.readPixels(0,0,mW,mH,gl.RGBA,gl.UNSIGNED_BYTE,px);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    const flt=halfFloat&&modelFloat;
+    const px=flt?new Float32Array(mW*mH*4):new Uint8Array(mW*mH*4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,mFbo);
+    gl.readPixels(0,0,mW,mH,gl.RGBA,flt?gl.FLOAT:gl.UNSIGNED_BYTE,px);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     const rows=Math.max(8,Math.round(cols*mH/mW/2));const out=[];
     for(let r=0;r<rows;r++){let line='';
       for(let c=0;c<cols;c++){
         const x=Math.floor((c+.5)/cols*mW), y=Math.floor((1-(r+.5)/rows)*mH);
-        line+= px[(y*mW+x)*4+3]>127 ? '#' : '.';}
+        const av=px[(y*mW+x)*4+3];line+= (flt?av>.5:av>127) ? '#' : '.';}
       out.push(line);}
     return out.join('\n');},
-  get state(){return{mode,modeName,shapeName,objectName,sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,mrx,mry,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
+  get state(){return{mode,modeName,shapeName,objectName,modelFloat,modelFbOk,modelBuf:[mW,mH],sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,mrx,mry,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
 requestAnimationFrame(frame);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestAnimationFrame(()=>{});});
 })();

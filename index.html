@@ -62,6 +62,7 @@
   .modes .row.shapes{background:rgba(11,14,19,.7)}
   .modes .row.shapes button{padding:5px 10px;font-size:7px;color:var(--dim)}
   .modes .row.shapes button.on{background:rgba(143,211,255,.12);color:var(--cyan)}
+  .modes .row.objects button.on{background:rgba(255,177,74,.14);color:var(--amber)}
   .modes .row button.sober.on{background:var(--amber2)}
   .modes .row button.sober.on::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .modes .note{font-family:var(--cockpit);font-size:12.5px;line-height:1.5;text-align:center;max-width:56ch;text-wrap:balance;color:var(--ink);padding:6px 12px;background:rgba(5,6,8,.6);border-left:2px solid var(--cyan);opacity:0;transition:opacity .8s}
@@ -143,6 +144,7 @@
 <nav class="modes" id="modes">
   <div class="row" id="modeRow"></div>
   <div class="row shapes" id="shapeRow"></div>
+  <div class="row shapes objects" id="objectRow"></div>
   <div class="note" id="modeNote"></div>
 </nav>
 
@@ -196,7 +198,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load 3D</b> in the shape row and choose an <b>.obj</b> or <b>.stl</b>. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Torus</b> is built in, to see the effect without a file.</p>
+  <p><b>A 3D file.</b> Press <b>Load 3D</b> in the shape row and choose an <b>.obj</b> or <b>.stl</b>. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. A dozen objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a double <b>Helix</b>, the <b>Lorenz</b> attractor, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
@@ -238,9 +240,25 @@ const MODES = {
 };
 const ANCHOR = {symLo:8,symHi:8,hueLock:1,hueBias:.075,sat:.9,contrast:.9,decay:.93,inj:.10,warp:.3,detail:4,pull:.002,rot:.0008,hueCycle:0,sparkle:0,rings:.2,wave:0,fract:0,fix:0,bokeh:.3,desat:0,rip:0,flow:.2,skin:.15,after:.1};
 const PKEYS=Object.keys(ANCHOR);
-const SHAPES=[{k:'circle',label:'Circle',sides:0,star:0},{k:'tri',label:'Triangle',sides:3,star:0},{k:'square',label:'Square',sides:4,star:0},{k:'penta',label:'Pentagon',sides:5,star:0},{k:'hex',label:'Hexagon',sides:6,star:0},{k:'star',label:'Star',sides:5,star:.85},{k:'flower',label:'Flower',sides:6,star:-.55},{k:'a',label:'accretion a',sides:0,star:0,mesh:'a'},{k:'knot',label:'Knot',sides:0,star:0,mesh:'knot'},{k:'load',label:'Load 3D',sides:0,star:0,load:true}];
-let shapeName='circle';
+const SHAPES=[{k:'circle',label:'Circle',sides:0,star:0},{k:'tri',label:'Triangle',sides:3,star:0},{k:'square',label:'Square',sides:4,star:0},{k:'penta',label:'Pentagon',sides:5,star:0},{k:'hex',label:'Hexagon',sides:6,star:0},{k:'star',label:'Star',sides:5,star:.85},{k:'flower',label:'Flower',sides:6,star:-.55}];
+const OBJECTS=[
+ {k:'none',label:'None'},
+ {k:'a',label:'accretion a',gen:()=>meshAccretionA()},
+ {k:'knot',label:'Knot',gen:()=>meshTorusKnot()},
+ {k:'infinity',label:'Infinity',gen:()=>meshInfinity()},
+ {k:'concentric',label:'Concentric',gen:()=>meshConcentric()},
+ {k:'mobius',label:'Mobius',gen:()=>meshMobius()},
+ {k:'helix',label:'Helix',gen:()=>meshHelix()},
+ {k:'lorenz',label:'Lorenz',gen:()=>meshLorenz()},
+ {k:'harmonic',label:'Harmonic',gen:()=>meshHarmonic()},
+ {k:'klein',label:'Klein',gen:()=>meshKlein()},
+ {k:'super',label:'Supershape',gen:()=>meshSupershape()},
+ {k:'torus',label:'Torus',gen:()=>meshTorus(.72,.26,140,26)},
+ {k:'load',label:'Load 3D',load:true},
+];
+let shapeName='circle',objectName='none';
 const DEFAULT_SHAPE='circle';
+const DEFAULT_OBJECT='none';
 const ORDER=['sober','cannabis','psilocybin','lsd','dmt','mdma','ketamine'];
 let modeName='lsd';
 const P={};for(const k of PKEYS)P[k]=MODES.lsd[k];
@@ -570,7 +588,7 @@ const modelProg=programVF(MODEL_VS,MODEL_FS);
 
 let modelVao=null,modelVbo=null,modelIbo=null,modelCount=0,hasModel=false,modelName='';
 let mFbo=null,mTex=null,mDepth=null,mW=0,mH=0;
-let mrx=0,mry=0,dolly=3.2,dollyTarget=3.2;
+let mrx=0,mry=0,dolly=3.2,dollyTarget=3.2,orbVx=0,orbVy=0,orbiting=false;
 
 function modelTargets(){
   const w=Math.max(64,Math.min(1024,Math.round(W*0.42))), h=Math.max(64,Math.round(H*0.42));
@@ -665,6 +683,136 @@ function meshTorusKnot(){
   for(let i=0;i<SEG;i++)for(let j=0;j<RING;j++){
     const a=i*(RING+1)+j,b=a+RING+1;idx.push(a,b,a+1,b,b+1,a+1);}
   return {pos,nor,idx};
+}
+
+// ---- geometry helpers: sweep a curve into a tube, or grid a parametric surface ----
+function _sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function _cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function _dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function _norm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];}
+
+// Parallel-transport frames, so a swept tube does not corkscrew at inflection points.
+function meshTube(curve,N,RING,radius,closed){
+  const P=[];for(let i=0;i<=N;i++)P.push(curve(i/N));
+  const T=[];
+  for(let i=0;i<=N;i++){
+    const a=P[i===0?(closed?N-1:0):i-1], b=P[i===N?(closed?1:N):i+1];
+    T.push(_norm(_sub(b,a)));
+  }
+  let up=Math.abs(_dot(T[0],[0,0,1]))>.9?[0,1,0]:[0,0,1];
+  let Nv=_norm(_cross(_cross(T[0],up),T[0]));
+  const NA=[Nv];
+  for(let i=1;i<=N;i++){
+    const d=_dot(NA[i-1],T[i]);
+    NA.push(_norm([NA[i-1][0]-T[i][0]*d,NA[i-1][1]-T[i][1]*d,NA[i-1][2]-T[i][2]*d]));
+  }
+  const pos=[],nor=[],idx=[];
+  for(let i=0;i<=N;i++){
+    const B=_cross(T[i],NA[i]);
+    const r=typeof radius==='function'?radius(i/N):radius;
+    for(let j=0;j<=RING;j++){
+      const v=j/RING*Math.PI*2,cv=Math.cos(v),sv=Math.sin(v);
+      const nx=NA[i][0]*cv+B[0]*sv,ny=NA[i][1]*cv+B[1]*sv,nz=NA[i][2]*cv+B[2]*sv;
+      pos.push(P[i][0]+nx*r,P[i][1]+ny*r,P[i][2]+nz*r);nor.push(nx,ny,nz);
+    }
+  }
+  for(let i=0;i<N;i++)for(let j=0;j<RING;j++){
+    const a=i*(RING+1)+j,b=a+RING+1;idx.push(a,b,a+1,b,b+1,a+1);}
+  return {pos,nor,idx};
+}
+// Grid a parametric surface, normals by finite difference.
+function meshSurface(fn,NU,NV){
+  const pos=[],nor=[],idx=[],e=1e-3;
+  for(let i=0;i<=NU;i++){const u=i/NU;
+    for(let j=0;j<=NV;j++){const v=j/NV;
+      const p=fn(u,v),a=fn(u+e,v),b=fn(u,v+e);
+      let n=_cross(_sub(a,p),_sub(b,p));
+      if(!isFinite(n[0])||(!n[0]&&!n[1]&&!n[2]))n=[0,0,1];
+      n=_norm(n);
+      pos.push(p[0],p[1],p[2]);nor.push(n[0],n[1],n[2]);}}
+  for(let i=0;i<NU;i++)for(let j=0;j<NV;j++){
+    const a=i*(NV+1)+j,b=a+NV+1;idx.push(a,b,a+1,b,b+1,a+1);}
+  return {pos,nor,idx};
+}
+
+// ---- the objects ----
+// Lemniscate of Bernoulli, lifted out of plane so it reads as a solid figure of eight.
+function meshInfinity(){
+  return meshTube(t=>{const a=t*Math.PI*2,d=1+Math.sin(a)*Math.sin(a);
+    return [1.15*Math.cos(a)/d, 1.15*Math.sin(a)*Math.cos(a)/d, .30*Math.sin(2*a)];},
+    260,14,.115,true);
+}
+// Nested rings, each tipped a little further over, like an armillary.
+function meshConcentric(){
+  const parts=[];
+  for(let k=0;k<6;k++){
+    const R=.30+k*.145, th=k*.26;
+    const m=meshTorus(R,.032+.006*k,110,10);
+    const c=Math.cos(th),si=Math.sin(th);
+    for(let i=0;i<m.pos.length;i+=3){
+      const y=m.pos[i+1],z=m.pos[i+2];m.pos[i+1]=y*c-z*si;m.pos[i+2]=y*si+z*c;
+      const ny=m.nor[i+1],nz=m.nor[i+2];m.nor[i+1]=ny*c-nz*si;m.nor[i+2]=ny*si+nz*c;}
+    parts.push(m);
+  }
+  return meshMerge(parts);
+}
+// A Mobius strip: one surface, one edge.
+function meshMobius(){
+  return meshSurface((u,v)=>{const a=u*Math.PI*2,w=(v-.5)*.62;
+    const r=1+w*.5*Math.cos(a/2);
+    return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},220,16);
+}
+// Double helix with rungs between the strands.
+function meshHelix(){
+  const TURNS=3.2,H=1.9;
+  const strand=off=>meshTube(t=>{const a=t*Math.PI*2*TURNS+off;
+    return [.55*Math.cos(a), t*H-H/2, .55*Math.sin(a)];},300,10,.075,false);
+  const parts=[strand(0),strand(Math.PI)];
+  for(let k=0;k<=22;k++){
+    const t=k/22,a=t*Math.PI*2*TURNS,y=t*H-H/2;
+    parts.push(meshTube(u=>{const aa=a+u*Math.PI;
+      return [.55*Math.cos(aa), y, .55*Math.sin(aa)];},14,7,.032,false));
+  }
+  return meshMerge(parts);
+}
+// The Lorenz attractor, integrated then swept. Chaotic, never repeats.
+function meshLorenz(){
+  const sig=10,rho=28,bet=8/3,dt=.006,N=2600;
+  let x=.1,y=0,z=0;const pts=[];
+  for(let i=0;i<600;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;x+=dx*dt;y+=dy*dt;z+=dz*dt;}
+  for(let i=0;i<N;i++){const dx=sig*(y-x),dy=x*(rho-z)-y,dz=x*y-bet*z;
+    x+=dx*dt;y+=dy*dt;z+=dz*dt;pts.push([x*.05,(z-25)*.05,y*.05]);}
+  return meshTube(t=>{const f=t*(pts.length-1),i=Math.min(pts.length-2,Math.floor(f)),k=f-i;
+    const a=pts[i],b=pts[i+1];
+    return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];},900,8,.028,false);
+}
+// A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
+function meshHarmonic(){
+  const m=[4,3,4,3,4,3,2,3];
+  return meshSurface((u,v)=>{const th=u*Math.PI,ph=v*Math.PI*2;
+    let r=Math.pow(Math.abs(Math.sin(m[0]*ph)),m[1])
+         +Math.pow(Math.abs(Math.cos(m[2]*ph)),m[3])
+         +Math.pow(Math.abs(Math.sin(m[4]*th)),m[5])
+         +Math.pow(Math.abs(Math.cos(m[6]*th)),m[7]);
+    r*=.42;
+    return [r*Math.sin(th)*Math.cos(ph), r*Math.cos(th), r*Math.sin(th)*Math.sin(ph)];},150,150);
+}
+// Figure-eight immersion of a Klein bottle: a surface with no inside.
+function meshKlein(){
+  return meshSurface((uu,vv)=>{const u=uu*Math.PI*2,v=vv*Math.PI*2,a=1.1;
+    const c=a+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u);
+    return [.62*c*Math.cos(v), .62*c*Math.sin(v),
+            .62*(Math.sin(v/2)*Math.sin(u)+Math.cos(v/2)*Math.sin(2*u))];},170,110);
+}
+// Gielis superformula, the one equation behind a great many natural outlines.
+function meshSupershape(){
+  const sf=(a,n1,n2,n3,m)=>{
+    const t1=Math.pow(Math.abs(Math.cos(m*a/4)),n2),t2=Math.pow(Math.abs(Math.sin(m*a/4)),n3);
+    return Math.pow(t1+t2,-1/n1);};
+  return meshSurface((u,v)=>{const th=(u-.5)*Math.PI,ph=(v-.5)*Math.PI*2;
+    const r1=sf(ph,.2,1.7,1.7,7),r2=sf(th,.2,1.7,1.7,7);
+    const k=1.0;
+    return [k*r1*Math.cos(ph)*r2*Math.cos(th), k*r2*Math.sin(th), k*r1*Math.sin(ph)*r2*Math.cos(th)];},160,160);
 }
 
 function uploadMesh(m,name){
@@ -767,7 +915,7 @@ async function loadMeshFile(file){
     if(!m.idx.length){ showMsg('That file had no triangles in it.',5000); return; }
     if(m.idx.length>1500000){ showMsg('That mesh is very heavy. Decimate it and try again.',6000); return; }
     uploadMesh(m,file.name);
-    shapeName='model';shapeRow.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.shape==='load'));
+    objectName='file';markObject('load');
     showMsg(`${file.name} loaded, ${(m.idx.length/3).toLocaleString()} triangles. Raise the model dial.`,6000);
   }catch(e){ showMsg('Could not read that mesh.',5000); }
 }
@@ -776,8 +924,11 @@ function drawModel(dt,react){
   dolly+=(dollyTarget-dolly)*Math.min(1,dt*3.5);
   if(!hasModel||!modelVao)return;
   modelTargets();
-  mrx+=dt*0.21*(1+0.5*env[2]*react);
-  mry+=dt*0.34*(1+0.9*env[1]*react);
+  const drift=orbiting?0.12:1;
+  mrx+=dt*0.21*drift*(1+0.5*env[2]*react)+orbVx*dt;
+  mry+=dt*0.34*drift*(1+0.9*env[1]*react)+orbVy*dt;
+  orbVx*=Math.pow(0.055,dt);orbVy*=Math.pow(0.055,dt);
+  mrx=Math.max(-1.45,Math.min(1.45,mrx));
   const cx=Math.cos(mrx),sx=Math.sin(mrx),cy=Math.cos(mry),sy=Math.sin(mry);
   // Ry * Rx as a column-major mat3
   const R=[ cy, sy*sx, -sy*cx,
@@ -1234,15 +1385,24 @@ const shapeRow=$('shapeRow');
 SHAPES.forEach(sp=>{const b=document.createElement('button');b.textContent=sp.label;b.dataset.shape=sp.k;
   b.title=`Fold the field onto a ${sp.label.toLowerCase()}`;b.onclick=()=>setShape(sp.k);shapeRow.appendChild(b);});
 function setShape(k){
-  const sp=SHAPES.find(x=>x.k===k);
-  if(sp&&sp.load){ $('meshFile').click(); return; }
-  if(sp&&sp.mesh){ uploadMesh(sp.mesh==='a'?meshAccretionA():meshTorusKnot(), sp.label); }
-  else if(k!=='model'){ hasModel=false; }
   shapeName=k;
   shapeRow.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.shape===k));
 }
+const objectRow=$('objectRow');
+OBJECTS.forEach(ob=>{const b=document.createElement('button');b.textContent=ob.label;b.dataset.obj=ob.k;
+  b.title=ob.load?'Load your own .obj or .stl':`Refract the field through a ${ob.label.toLowerCase()}`;
+  b.onclick=()=>setObject(ob.k);objectRow.appendChild(b);});
+function markObject(k){objectRow.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.obj===k));}
+function setObject(k){
+  const ob=OBJECTS.find(x=>x.k===k);
+  if(ob&&ob.load){ $('meshFile').click(); return; }
+  if(k==='none'){ hasModel=false; }
+  else if(ob&&ob.gen){ try{ uploadMesh(ob.gen(), ob.label); }catch(err){ showMsg('Could not build that object.',4000); return; } }
+  objectName=k; markObject(k);
+}
 $('meshFile').onchange=e=>{const f=e.target.files[0];if(f)loadMeshFile(f);e.target.value='';};
 setShape(DEFAULT_SHAPE);
+setObject(DEFAULT_OBJECT);
 function setAnchor(on){anchorOn=on;if(on)anchorSince=performance.now()/1000;
   $('anchorBtn').textContent=on?'Return':'Anchor';$('anchorBtn').classList.toggle('on',on);$('anchorText').classList.toggle('show',on);}
 $('anchorBtn').onclick=()=>setAnchor(!anchorOn);
@@ -1270,11 +1430,15 @@ window.addEventListener('dragleave',e=>{if(!e.relatedTarget)dropShow(false);});
 window.addEventListener('drop',e=>{e.preventDefault();dropShow(false);const f=e.dataTransfer.files[0];if(f)loadFile(f);});
 function toField(e){const r=canvas.getBoundingClientRect();return {x:((e.clientX-r.left)/r.width-.5)*(r.width/r.height),y:-((e.clientY-r.top)/r.height-.5)};}
 canvas.addEventListener('pointermove',e=>{const f=toField(e);mouse.x=f.x;mouse.y=f.y;mouse.last=performance.now()/1000;
-  if(mouse.down){const dx=e.clientX-mouse.px,dy=e.clientY-mouse.py;if(Math.abs(dx)+Math.abs(dy)>3)mouse.dragged=true;spinVel+=dx*0.0025;zoomVel-=dy*0.0035;mouse.px=e.clientX;mouse.py=e.clientY;}},{passive:true});
+  if(mouse.down){const dx=e.clientX-mouse.px,dy=e.clientY-mouse.py;
+    if(Math.abs(dx)+Math.abs(dy)>3)mouse.dragged=true;
+    if(hasModel){ orbiting=true; mry+=dx*0.006; mrx+=dy*0.006; orbVx=dy*0.35; orbVy=dx*0.35; }
+    else { spinVel+=dx*0.0025; zoomVel-=dy*0.0035; }
+    mouse.px=e.clientX;mouse.py=e.clientY;}},{passive:true});
 canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;const f=toField(e);mouse.x=f.x;mouse.y=f.y;mouse.sx=f.x;mouse.sy=f.y;mouse.last=performance.now()/1000;mouse.down=true;mouse.dragged=false;mouse.px=e.clientX;mouse.py=e.clientY;canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointerup',e=>{if(!mouse.down)return;mouse.down=false;
+canvas.addEventListener('pointerup',e=>{if(!mouse.down)return;mouse.down=false;orbiting=false;
   if(!mouse.dragged){const now=performance.now()/1000;const f=toField(e);ripples.push({x:f.x,y:f.y,age:0,s:1.3,t:now});if(ripples.length>8)ripples.shift();punch=Math.max(punch,0.5);}});
-canvas.addEventListener('pointercancel',()=>{mouse.down=false;});
+canvas.addEventListener('pointercancel',()=>{mouse.down=false;orbiting=false;});
 canvas.addEventListener('dblclick',e=>{e.preventDefault();$('fsBtn').click();});
 canvas.addEventListener('wheel',e=>{e.preventDefault();mouse.last=performance.now()/1000;
   if(e.ctrlKey||e.metaKey){symOffset=Math.max(-6,Math.min(8,symOffset-e.deltaY*0.02));return;}
@@ -1285,7 +1449,7 @@ let idleT;function wake(){document.body.classList.remove('idle');clearTimeout(id
 ['mousemove','pointerdown','touchstart'].forEach(ev=>window.addEventListener(ev,wake,{passive:true}));wake();
 
 window.PHOSPHENE={loadArrayBuffer:async ab=>{ensureCtx();buffer=await ctx.decodeAudioData(ab);duration=buffer.duration;offset=0;setMode('file');$('playBtn').disabled=false;play();},
-  setMode:setModeName,setShape:(k)=>setShape(k),
+  setMode:setModeName,setShape:(k)=>setShape(k),setObject:(k)=>setObject(k),
   // debug: read the model's coverage mask back as a small grid
   readModelMask:(cols)=>{cols=cols||56;if(!hasModel||!mFbo)return null;
     const px=new Uint8Array(mW*mH*4);gl.bindFramebuffer(gl.FRAMEBUFFER,mFbo);
@@ -1297,7 +1461,7 @@ window.PHOSPHENE={loadArrayBuffer:async ab=>{ensureCtx();buffer=await ctx.decode
         line+= px[(y*mW+x)*4+3]>127 ? '#' : '.';}
       out.push(line);}
     return out.join('\n');},
-  get state(){return{mode,modeName,shapeName,sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
+  get state(){return{mode,modeName,shapeName,objectName,sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,mrx,mry,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
 requestAnimationFrame(frame);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestAnimationFrame(()=>{});});
 })();

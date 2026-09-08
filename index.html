@@ -64,6 +64,8 @@
   .modes .row.shapes button.on{background:rgba(143,211,255,.12);color:var(--cyan)}
   .modes .row.shapes button[data-obj].on{background:rgba(255,177,74,.14);color:var(--amber)}
   .modes .row.shapes .div{flex:none;width:1px;margin:6px 9px;background:var(--line);align-self:stretch}
+  .modes .row.shapes .tag{flex:none;font-family:var(--display);font-size:6.5px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--dim);font-style:normal;padding:0 9px 0 10px;white-space:nowrap;align-self:center}
   .modes .row button.sober.on{background:var(--amber2)}
   .modes .row button.sober.on::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .textpanel{display:flex;align-items:center;gap:0;background:rgba(11,14,19,.9);border:1px solid var(--line);backdrop-filter:blur(12px)}
@@ -192,6 +194,7 @@
     <button id="midiBtn" title="Your drum kit or controller over MIDI. Kick, snare and hats hit exactly.">MIDI</button>
     <input type="file" id="file" accept="audio/*" hidden>
     <input type="file" id="meshFile" accept=".obj,.stl,.OBJ,.STL" hidden>
+    <input type="file" id="logoFile" accept=".pdf,.svg,.png,.jpg,.jpeg,.webp,.gif" hidden>
   </div>
   <div class="group">
     <button id="playBtn" disabled>Play</button>
@@ -227,7 +230,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Deformers.</b> <b>Twist</b> rotates the field more the further out you go. <b>Bulge</b> swells the centre, or pinches it when you pull left of zero. <b>Ripple</b> runs concentric waves outward. All three sit at zero in the middle and take the music with them: the kick drives bulge, the bass drives twist and ripple.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
@@ -282,6 +285,7 @@ const OBJECTS=[
  {k:'klein',label:'Klein',gen:()=>meshKlein()},
  {k:'super',label:'Supershape',gen:()=>meshSupershape()},
  {k:'torus',label:'Torus',gen:()=>meshTorus(.72,.26,220,40)},
+ {k:'logo',label:'Load .PDF / .SVG / .PNG',logo:true},
  {k:'load',label:'Load .OBJ / .STL',load:true},
 ];
 let shapeName='circle',objectName='none';
@@ -621,7 +625,7 @@ let mrx=0,mry=0,dolly=3.2,dollyTarget=3.2,orbVx=0,orbVy=0,orbiting=false;
 function modelTargets(){
   // Full field resolution. The normals drive a displacement, so any softness here shows up
   // directly in the picture; and 8-bit normals terrace, hence RGBA16F when it is available.
-  const cap=2560;
+  const cap=4096;
   const sc=Math.min(1, cap/Math.max(W,H));
   const w=Math.max(64,Math.round(W*sc)), h=Math.max(64,Math.round(H*sc));
   if(w===mW&&h===mH&&mFbo)return;
@@ -783,7 +787,6 @@ function meshSurface(fn,NU,NV){
 }
 
 // ---- the objects ----
-// Lemniscate of Bernoulli, lifted out of plane so it reads as a solid figure of eight.
 function meshInfinity(){
   // Lemniscate of Gerono: both lobes stay round instead of pinching to points.
   return meshTube(t=>{const a=t*Math.PI*2;
@@ -804,6 +807,13 @@ function meshConcentric(){
   }
   return meshMerge(parts);
 }
+// A Mobius strip: one surface, one edge.
+function meshMobius(){
+  return meshSurface((u,v)=>{const a=u*Math.PI*2,w=(v-.5)*.62;
+    const r=1+w*.5*Math.cos(a/2);
+    return [r*Math.cos(a), r*Math.sin(a), w*.5*Math.sin(a/2)];},340,30);
+}
+// A spherical-harmonic surface: the standing-wave shapes of a vibrating sphere.
 function meshHarmonic(){
   const m=[4,3,4,3,4,3,2,3];
   return meshSurface((u,v)=>{const th=u*Math.PI,ph=v*Math.PI*2;
@@ -837,11 +847,11 @@ function meshSupershape(){
 // so the letters have real curved edges for the field to refract through.
 function meshText(str,fontCss,roundPx){
   str=(str||'').trim(); if(!str) str='a';
-  const H=190, RND=Math.max(3,roundPx||16);
+  const H=280, RND=Math.max(3,Math.round((roundPx||16)*280/190));
   const probe=document.createElement('canvas').getContext('2d');
   probe.font=H+'px '+fontCss;
   const wpx=Math.max(20,Math.ceil(probe.measureText(str).width));
-  const pad=Math.ceil(RND*1.6)+8;
+  const pad=Math.ceil(RND*1.7)+10;
   const W=wpx+pad*2, Hh=Math.ceil(H*1.55)+pad*2;
   const cv=document.createElement('canvas'); cv.width=W; cv.height=Hh;
   const c=cv.getContext('2d',{willReadFrequently:true});
@@ -849,8 +859,15 @@ function meshText(str,fontCss,roundPx){
   c.font=H+'px '+fontCss; c.textAlign='center'; c.textBaseline='middle';
   c.fillStyle='#fff'; c.fillText(str,W/2,Hh/2);
   const img=c.getImageData(0,0,W,Hh).data;
+  const inside=new Uint8Array(W*Hh);
+  for(let i=0,pI=0;i<inside.length;i++,pI+=4) inside[i]= img[pI]>110 ? 1 : 0;
+  return meshFromMask(inside,W,Hh,RND);
+}
+// Turn a filled-pixel mask into a rounded solid: distance to the nearest edge drives a
+// domed height field, so the form has real curved sides rather than a flat extrusion.
+function meshFromMask(inside,W,Hh,RND){
   const BIG=1e9, D=new Float32Array(W*Hh);
-  for(let i=0,pI=0;i<D.length;i++,pI+=4) D[i]= img[pI]>110 ? BIG : 0;
+  for(let i=0;i<D.length;i++) D[i]= inside[i] ? BIG : 0;
   const a1=1, b1=1.4142136;
   for(let y=1;y<Hh;y++)for(let x=1;x<W-1;x++){const i=y*W+x;
     D[i]=Math.min(D[i],D[i-1]+a1,D[i-W]+a1,D[i-W-1]+b1,D[i-W+1]+b1);}
@@ -858,7 +875,9 @@ function meshText(str,fontCss,roundPx){
     D[i]=Math.min(D[i],D[i+1]+a1,D[i+W]+a1,D[i+W+1]+b1,D[i+W-1]+b1);}
   // domed height: a quarter circle rising from the edge to the full thickness
   const hAt=i=>{const t=Math.min(D[i]/RND,1);return Math.sqrt(Math.max(0,1-(1-t)*(1-t)));};
-  const STEP=Math.max(2,Math.round(Math.max(W,Hh)/230));
+  const GRID=340, MAXQ=130000;
+  let STEP=Math.max(1,Math.round(Math.max(W,Hh)/GRID));
+  while((W/STEP)*(Hh/STEP)>MAXQ) STEP++;
   const GX=Math.floor((W-1)/STEP), GY=Math.floor((Hh-1)/STEP);
   const sc=2/Math.max(W,Hh), TH=RND*sc*0.92;
   const pos=[],nor=[],idx=[];
@@ -884,8 +903,23 @@ function meshText(str,fontCss,roundPx){
     idx.push(gi[k00],gi[k01],gi[k10], gi[k10],gi[k01],gi[k11]);
     idx.push(gj[k00],gj[k10],gj[k01], gj[k10],gj[k11],gj[k01]);
   }
-  if(!idx.length) throw new Error('empty text');
+  if(!idx.length) throw new Error('nothing to build');
   return {pos,nor,idx};
+}
+// A logo: render it to a canvas, decide what counts as ink, then use the same solid builder.
+function meshFromCanvas(cv,RND){
+  const W=cv.width,Hh=cv.height;
+  const d=cv.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,Hh).data;
+  let anyAlpha=false;
+  for(let i=3;i<d.length;i+=4*97){ if(d[i]<250){anyAlpha=true;break;} }
+  const inside=new Uint8Array(W*Hh);
+  for(let i=0,p=0;i<inside.length;i++,p+=4){
+    if(anyAlpha) inside[i]= d[p+3]>110 ? 1 : 0;
+    else { const l=.299*d[p]+.587*d[p+1]+.114*d[p+2]; inside[i]= l<205 ? 1 : 0; }
+  }
+  let n=0; for(let i=0;i<inside.length;i++) n+=inside[i];
+  if(n<40) throw new Error('nothing to build');
+  return meshFromMask(inside,W,Hh,RND);
 }
 async function buildTextObject(){
   const str=$('textInput').value, font=$('textFont').value, rnd=+$('textRound').value;
@@ -983,6 +1017,69 @@ function parseSTL(buf){
     }
   }
   return {pos,nor,idx};
+}
+let pdfLibPromise=null;
+function loadPdfLib(){
+  if(pdfLibPromise) return pdfLibPromise;
+  pdfLibPromise=new Promise((res,rej)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){}
+      res(window.pdfjsLib); };
+    sc.onerror=()=>rej(new Error('pdf.js blocked'));
+    document.head.appendChild(sc);
+  });
+  return pdfLibPromise;
+}
+async function canvasFromPDF(file){
+  const lib=await loadPdfLib();
+  const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;
+  const page=await doc.getPage(1);
+  const base=page.getViewport({scale:1});
+  const scale=Math.min(2400/base.width, 1700/base.height, 8);
+  const vp=page.getViewport({scale:Math.max(scale,.4)});
+  const cv=document.createElement('canvas');
+  const M=60;
+  cv.width=Math.ceil(vp.width)+M*2; cv.height=Math.ceil(vp.height)+M*2;
+  const c=cv.getContext('2d',{willReadFrequently:true});
+  c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
+  c.translate(M,M);
+  await page.render({canvasContext:c,viewport:vp}).promise;
+  return cv;
+}
+function canvasFromImage(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{
+      const k=Math.min(2000/im.width, 1500/im.height, 10);
+      const cv=document.createElement('canvas');
+      const M=60;
+      cv.width=Math.ceil(im.width*k)+M*2; cv.height=Math.ceil(im.height*k)+M*2;
+      const c=cv.getContext('2d',{willReadFrequently:true});
+      c.drawImage(im,M,M,im.width*k,im.height*k);
+      URL.revokeObjectURL(url); res(cv);
+    };
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'));};
+    im.src=url;
+  });
+}
+async function loadLogoFile(file){
+  const n=file.name.toLowerCase();
+  showMsg('Reading '+file.name+' …',0);
+  try{
+    let cv;
+    if(n.endsWith('.pdf')) cv=await canvasFromPDF(file);
+    else if(/\.(svg|png|jpg|jpeg|webp|gif)$/.test(n)) cv=await canvasFromImage(file);
+    else { showMsg('Phosphene reads .pdf, .svg and .png logos. Export yours as one of those.',7000); return; }
+    uploadMesh(meshFromCanvas(cv, +$('textRound').value), file.name);
+    objectName='logo'; markObject('logo'); $('textPanel').hidden=true;
+    showMsg(file.name+' loaded. Raise the model dial, and the round slider softens its edges.',6500);
+  }catch(e){
+    showMsg(n.endsWith('.pdf')
+      ? 'Could not read that PDF. A flattened, vector logo works best.'
+      : 'Could not read that logo file.',6000);
+  }
 }
 async function loadMeshFile(file){
   try{
@@ -1461,6 +1558,8 @@ function setModeName(name,quiet){modeName=name;
   if(quiet)return;const n=$('modeNote');n.textContent=MODES[name].note;n.classList.add('show');clearTimeout(noteT);noteT=setTimeout(()=>n.classList.remove('show'),name==='sober'?14000:7000);}
 setModeName('lsd',true);
 const shapeRow=$('shapeRow');
+function rowTag(t){const i=document.createElement('i');i.className='tag';i.textContent=t;shapeRow.appendChild(i);}
+rowTag('field shape');
 SHAPES.forEach(sp=>{const b=document.createElement('button');b.textContent=sp.label;b.dataset.shape=sp.k;
   b.title=`Fold the field onto a ${sp.label.toLowerCase()}`;b.onclick=()=>setShape(sp.k);shapeRow.appendChild(b);});
 function setShape(k){
@@ -1468,14 +1567,16 @@ function setShape(k){
   shapeRow.querySelectorAll('button[data-shape]').forEach(b=>b.classList.toggle('on',b.dataset.shape===k));
 }
 const divider=document.createElement('i');divider.className='div';shapeRow.appendChild(divider);
+rowTag('3D object');
 const objectRow=shapeRow;
 OBJECTS.forEach(ob=>{const b=document.createElement('button');b.textContent=ob.label;b.dataset.obj=ob.k;
-  b.title=ob.load?'Load your own 3D file. Wavefront .obj or .stl, binary or ASCII.':`Refract the field through a ${ob.label.toLowerCase()}`;
+  b.title=ob.logo?'Load a logo. PDF, SVG or PNG. It is rendered, then built as a rounded solid.':ob.load?'Load your own 3D file. Wavefront .obj or .stl, binary or ASCII.':`Refract the field through a ${ob.label.toLowerCase()}`;
   b.onclick=()=>setObject(ob.k);objectRow.appendChild(b);});
 function markObject(k){shapeRow.querySelectorAll('button[data-obj]').forEach(b=>b.classList.toggle('on',b.dataset.obj===k));}
 function setObject(k){
   const ob=OBJECTS.find(x=>x.k===k);
   if(ob&&ob.load){ $('meshFile').click(); return; }
+  if(ob&&ob.logo){ $('logoFile').click(); return; }
   $('textPanel').hidden = !(ob&&ob.text);
   if(ob&&ob.text){ objectName='text'; markObject('text'); buildTextObject(); $('textInput').focus(); $('textInput').select(); return; }
   if(k==='none'){ hasModel=false; }
@@ -1483,6 +1584,7 @@ function setObject(k){
   objectName=k; markObject(k);
 }
 $('meshFile').onchange=e=>{const f=e.target.files[0];if(f)loadMeshFile(f);e.target.value='';};
+$('logoFile').onchange=e=>{const f=e.target.files[0];if(f)loadLogoFile(f);e.target.value='';};
 let textT;
 function textChanged(){clearTimeout(textT);textT=setTimeout(buildTextObject,260);}
 $('textInput').addEventListener('input',textChanged);

@@ -66,6 +66,7 @@ bends around a real object rather than a flat mask. Eleven are built in:
 | Klein | the figure-eight immersion of a Klein bottle, a surface with no inside |
 | Supershape | the Gielis superformula, the one equation behind many natural outlines |
 | Torus | the plain case |
+| Load .PDF / .SVG / .PNG | a logo. It is rendered, then built as a rounded solid the same way as text |
 | Load .OBJ / .STL | your own model. Wavefront `.obj` and `.stl`, binary or ASCII |
 
 **Drag to spin it.** Press and drag anywhere to orbit the object; it keeps turning when you

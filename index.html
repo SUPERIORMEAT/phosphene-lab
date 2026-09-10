@@ -915,20 +915,52 @@ function meshText(str,fontCss,roundPx){
   c.font=H+'px '+fontCss; c.textAlign='center'; c.textBaseline='middle';
   c.fillStyle='#fff'; c.fillText(str,W/2,Hh/2);
   const img=c.getImageData(0,0,W,Hh).data;
-  const inside=new Uint8Array(W*Hh);
-  for(let i=0,pI=0;i<inside.length;i++,pI+=4) inside[i]= img[pI]>110 ? 1 : 0;
-  return meshFromMask(inside,W,Hh,FRAC);
+  const inside=new Uint8Array(W*Hh), covA=new Uint8Array(W*Hh);
+  for(let i=0,pI=0;i<inside.length;i++,pI+=4){ covA[i]=img[pI]; inside[i]= img[pI]>110 ? 1 : 0; }
+  return meshFromMask(inside,W,Hh,FRAC,covA);
 }
 // Turn a filled-pixel mask into a rounded solid: distance to the nearest edge drives a
 // domed height field, so the form has real curved sides rather than a flat extrusion.
-function meshFromMask(inside,W,Hh,roundFrac){
-  const BIG=1e9, D=new Float32Array(W*Hh);
-  for(let i=0;i<D.length;i++) D[i]= inside[i] ? BIG : 0;
-  const a1=1, b1=1.4142136;
-  for(let y=1;y<Hh;y++)for(let x=1;x<W-1;x++){const i=y*W+x;
-    D[i]=Math.min(D[i],D[i-1]+a1,D[i-W]+a1,D[i-W-1]+b1,D[i-W+1]+b1);}
-  for(let y=Hh-2;y>=0;y--)for(let x=W-2;x>0;x--){const i=y*W+x;
-    D[i]=Math.min(D[i],D[i+1]+a1,D[i+W]+a1,D[i+W+1]+b1,D[i+W-1]+b1);}
+function meshFromMask(inside,W,Hh,roundFrac,cov){
+  // Exact Euclidean distance transform (Felzenszwalb's lower envelope of parabolas).
+  // The old chamfer was cheap but its level sets are octagons, so every curved edge
+  // came out as a faint staircase, which read as bumps along the bevel.
+  const INF=1e20;
+  const f=new Float64Array(Math.max(W,Hh));
+  const dd=new Float64Array(Math.max(W,Hh));
+  const vv=new Int32Array(Math.max(W,Hh));
+  const zz=new Float64Array(Math.max(W,Hh)+1);
+  const D=new Float64Array(W*Hh);
+  for(let i=0;i<D.length;i++) D[i]= inside[i] ? INF : 0;
+  function edt1d(n){
+    let k=0; vv[0]=0; zz[0]=-INF; zz[1]=INF;
+    for(let q=1;q<n;q++){
+      let s=((f[q]+q*q)-(f[vv[k]]+vv[k]*vv[k]))/(2*q-2*vv[k]);
+      while(s<=zz[k]){ k--; s=((f[q]+q*q)-(f[vv[k]]+vv[k]*vv[k]))/(2*q-2*vv[k]); }
+      k++; vv[k]=q; zz[k]=s; zz[k+1]=INF;
+    }
+    k=0;
+    for(let q=0;q<n;q++){
+      while(zz[k+1]<q) k++;
+      const d=q-vv[k];
+      dd[q]=d*d+f[vv[k]];
+    }
+  }
+  for(let x=0;x<W;x++){                       // columns
+    for(let y=0;y<Hh;y++) f[y]=D[y*W+x];
+    edt1d(Hh);
+    for(let y=0;y<Hh;y++) D[y*W+x]=dd[y];
+  }
+  for(let y=0;y<Hh;y++){                      // rows
+    const r=y*W;
+    for(let x=0;x<W;x++) f[x]=D[r+x];
+    edt1d(W);
+    for(let x=0;x<W;x++) D[r+x]=Math.sqrt(dd[x]);
+  }
+  // Sub-pixel edge: the raster is antialiased, so a partly covered pixel tells us where
+  // the true boundary sits inside it. Without this the surface steps by whole pixels.
+  if(cov) for(let i=0;i<D.length;i++) if(D[i]>0 && D[i]<2.5) D[i]+= (cov[i]/255)-0.5;
+
   // Grid only what the form occupies. Gridding the whole canvas spent most of the
   // triangle budget on empty margin, which is what made the letterforms look coarse.
   let x0=W,y0=Hh,x1=-1,y1=-1;
@@ -985,14 +1017,15 @@ function meshFromCanvas(cv,roundFrac){
   const d=rctx.getImageData(0,0,W,Hh).data;
   let anyAlpha=false;
   for(let i=3;i<d.length;i+=4*97){ if(d[i]<250){anyAlpha=true;break;} }
-  const inside=new Uint8Array(W*Hh);
+  const inside=new Uint8Array(W*Hh), covA=new Uint8Array(W*Hh);
   for(let i=0,p=0;i<inside.length;i++,p+=4){
-    if(anyAlpha) inside[i]= d[p+3]>110 ? 1 : 0;
-    else { const l=.299*d[p]+.587*d[p+1]+.114*d[p+2]; inside[i]= l<205 ? 1 : 0; }
+    if(anyAlpha){ covA[i]=d[p+3]; inside[i]= d[p+3]>110 ? 1 : 0; }
+    else { const l=.299*d[p]+.587*d[p+1]+.114*d[p+2];
+           covA[i]=255-Math.max(0,Math.min(255,Math.round(l))); inside[i]= l<205 ? 1 : 0; }
   }
   let n=0; for(let i=0;i<inside.length;i++) n+=inside[i];
   if(n<40) throw new Error('nothing to build');
-  return meshFromMask(inside,W,Hh,roundFrac);
+  return meshFromMask(inside,W,Hh,roundFrac,covA);
 }
 async function buildTextObject(){
   const str=$('textInput').value, font=$('textFont').value, rnd=+$('textRound').value;

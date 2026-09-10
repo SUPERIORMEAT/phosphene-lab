@@ -991,7 +991,30 @@ function meshFromMask(inside,W,Hh,roundFrac,cov){
   const pos=[],nor=[],idx=[];
   const gi=new Int32Array((GX+1)*(GY+1)).fill(-1);
   const gj=new Int32Array((GX+1)*(GY+1)).fill(-1);
-  const hOf=(gx,gy)=>{const x=Math.min(W-1,x0+gx*STEP),y=Math.min(Hh-1,y0+gy*STEP);return hAt(y*W+x);};
+  // Point-sampling the height every STEP pixels is aliasing, and the normals are the
+  // DIFFERENCE of two such samples, which amplifies that noise into visible bumps.
+  // Average each block instead: proper downsampling, and the gradient comes out smooth.
+  const GW=GX+1, GH=GY+1, H2=new Float32Array(GW*GH);
+  {
+    const r=Math.max(1,Math.round(STEP*0.9));
+    for(let gy=0;gy<GH;gy++){
+      const by=y0+gy*STEP;
+      for(let gx=0;gx<GW;gx++){
+        const bx=x0+gx*STEP;
+        let sum=0,cnt=0;
+        for(let dy=-r;dy<=r;dy++){
+          const y=by+dy; if(y<0||y>=Hh) continue;
+          const row=y*W;
+          for(let dx=-r;dx<=r;dx++){
+            const x=bx+dx; if(x<0||x>=W) continue;
+            sum+=hAt(row+x); cnt++;
+          }
+        }
+        H2[gy*GW+gx]= cnt ? sum/cnt : 0;
+      }
+    }
+  }
+  const hOf=(gx,gy)=>H2[Math.min(GH-1,Math.max(0,gy))*GW+Math.min(GW-1,Math.max(0,gx))];
   for(let gy=0;gy<=GY;gy++)for(let gx=0;gx<=GX;gx++){
     const h=hOf(gx,gy);
     const hx=hOf(Math.min(GX,gx+1),gy)-hOf(Math.max(0,gx-1),gy);
@@ -1792,6 +1815,38 @@ window.PHOSPHENE={loadArrayBuffer:async ab=>{ensureCtx();buffer=await ctx.decode
       out.push((.299*px[i]+.587*px[i+1]+.114*px[i+2])*k);
     }
     return out;},
+  // debug: how smoothly do the surface normals vary? terracing shows up as
+  // repeated jumps along a scanline that should be a smooth ramp.
+  readNormalRoughness:()=>{
+    if(!hasModel||!mFbo)return null;
+    const flt=halfFloat&&modelFloat;
+    const px=flt?new Float32Array(mW*mH*4):new Uint8Array(mW*mH*4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,mFbo);
+    gl.readPixels(0,0,mW,mH,gl.RGBA,flt?gl.FLOAT:gl.UNSIGNED_BYTE,px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    const k=flt?1:1/255;
+    let n=0,sumAbs=0,jumps=0,runs=0;
+    for(let y=Math.floor(mH*0.25);y<mH*0.75;y+=7){
+      let prev=null,prevD=0,run=0;
+      for(let x=1;x<mW-1;x++){
+        const i=(y*mW+x)*4;
+        if(px[i+3]*k<0.5){prev=null;continue;}
+        const nx=px[i]*k*2-1;
+        if(prev!==null){
+          const d=nx-prev;
+          sumAbs+=Math.abs(d);n++;
+          if(Math.abs(d)>0.06)jumps++;
+          if(prevD!==0&&Math.sign(d)!==Math.sign(prevD)&&Math.abs(d)>0.02)run++;
+          prevD=d;
+        }
+        prev=nx;
+      }
+      runs+=run;
+    }
+    return {samples:n,meanStep:+(sumAbs/Math.max(1,n)).toFixed(4),
+            bigJumps:jumps,jumpRate:+(jumps/Math.max(1,n)*100).toFixed(2),
+            reversals:runs};
+  },
   // debug: read the model's coverage mask back as a small grid
   readModelMask:(cols)=>{cols=cols||56;if(!hasModel||!mFbo)return null;
     const flt=halfFloat&&modelFloat;

@@ -1220,7 +1220,7 @@ async function canvasFromPDF(file){
   const doc=await withTimeout(lib.getDocument({data:await file.arrayBuffer()}).promise,15000,'reading the PDF');
   const page=await withTimeout(doc.getPage(1),10000,'reading page 1');
   const base=page.getViewport({scale:1});
-  const scale=Math.min(2400/base.width, 1700/base.height, 8);
+  const scale=Math.min(3600/base.width, 3600/base.height, 24);   // a PDF is a vector too
   const vp=page.getViewport({scale:Math.max(scale,.4)});
   const M=60;
   const cv=document.createElement('canvas');
@@ -1231,11 +1231,15 @@ async function canvasFromPDF(file){
   await withTimeout(page.render({canvasContext:c,viewport:vp}).promise,45000,'drawing the PDF');
   return cv;
 }
-function canvasFromImage(file){
+function canvasFromImage(file,isVector){
   return new Promise((res,rej)=>{
     const url=URL.createObjectURL(file), im=new Image();
     im.onload=()=>{
-      const k=Math.min(2000/im.width, 1500/im.height, 10);
+      // A true vector has unlimited detail, so draw it big. A bitmap has only what it has,
+      // and enlarging it invents nothing while costing time, so never scale one up.
+      const k = isVector
+        ? Math.min(3600/im.width, 3600/im.height, 60)
+        : Math.min(1, 3200/im.width, 3200/im.height);
       const cv=document.createElement('canvas');
       const M=60;
       cv.width=Math.ceil(im.width*k)+M*2; cv.height=Math.ceil(im.height*k)+M*2;
@@ -1253,11 +1257,15 @@ async function loadLogoFile(file){
   try{
     let cv;
     if(n.endsWith('.pdf')) cv=await canvasFromPDF(file);
-    else if(/\.(svg|png|jpg|jpeg|webp|gif)$/.test(n)) cv=await canvasFromImage(file);
+    else if(/\.(svg|png|jpg|jpeg|webp|gif)$/.test(n)) cv=await canvasFromImage(file, /\.svg$/.test(n));
     else { showMsg('Phosphene reads .pdf, .svg and .png logos. Export yours as one of those.',7000); return; }
     uploadMesh(meshFromCanvas(cv, (+$('textRound').value)/190), file.name);
     objectName='logo'; markObject('logo'); $('textPanel').hidden=true;
-    showMsg(file.name+' loaded. Raise the model dial, and the round slider softens its edges.',6500);
+    const px=cv.width+'x'+cv.height;
+    const thin=(!/\.(svg|pdf)$/.test(n) && Math.max(cv.width,cv.height)<1400);
+    showMsg(file.name+' loaded, drawn at '+px+'.'+
+      (thin ? ' That file is small, so its edges are as smooth as they can get. Use the SVG or PDF for a cleaner shape.'
+            : ' Raise the model dial; the round slider softens its edges.'), thin?9000:6500);
   }catch(e){
     showMsg(n.endsWith('.pdf')
       ? 'Could not read that PDF here. Export the logo as SVG or PNG and load that instead.'

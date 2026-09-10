@@ -368,22 +368,27 @@ void main(){
   }
   // ---- 3D model: refract the field through the mesh's surface ----
   if(uModelAmt>.001){
-    // Five taps, not one. A single tap reads the mesh's silhouette as a hard one-pixel
-    // step, and this drives a displacement that the feedback loop then smears into
-    // visible stair edges. Averaging a small cross softens both the edge and the normals.
+    // Five taps, not one, so the mesh's silhouette does not arrive as a hard one-pixel
+    // step in a displacement field. Each tap is weighted by its OWN coverage: the buffer
+    // is cleared to 0.5 grey, so an empty tap carries no normal and must contribute
+    // nothing. Averaging first and dividing by the summed alpha afterwards treats that
+    // grey as signal and blows the normal up around every edge.
     vec2 muv=gl_FragCoord.xy/uRes;
     vec2 mo=1.7/uRes;
-    vec4 md=texture(uModel,muv)*0.36
-           +texture(uModel,muv+vec2(mo.x,0.))*0.16
-           +texture(uModel,muv-vec2(mo.x,0.))*0.16
-           +texture(uModel,muv+vec2(0.,mo.y))*0.16
-           +texture(uModel,muv-vec2(0.,mo.y))*0.16;
-    if(md.a>.01){
-      vec2 nrm=(md.rg/max(md.a,1e-3))*2.-1.;
-      float dep=(md.b/max(md.a,1e-3))*2.-1.;
+    vec4 s0=texture(uModel,muv);
+    vec4 s1=texture(uModel,muv+vec2(mo.x,0.));
+    vec4 s2=texture(uModel,muv-vec2(mo.x,0.));
+    vec4 s3=texture(uModel,muv+vec2(0.,mo.y));
+    vec4 s4=texture(uModel,muv-vec2(0.,mo.y));
+    float w0=s0.a*.36,w1=s1.a*.16,w2=s2.a*.16,w3=s3.a*.16,w4=s4.a*.16;
+    float cover=w0+w1+w2+w3+w4;
+    if(cover>.01){
+      vec3 c=(s0.rgb*w0+s1.rgb*w1+s2.rgb*w2+s3.rgb*w3+s4.rgb*w4)/max(cover,1e-4);
+      vec2 nrm=c.rg*2.-1.;
+      float dep=c.b*2.-1.;
       float amt=uModelAmt*(.7+.9*uBass*uReact);
-      p+=nrm*amt*.45*md.a;
-      p*=1.-amt*.28*dep*md.a;
+      p+=nrm*amt*.45*cover;
+      p*=1.-amt*.28*dep*cover;
       rr=length(p);
     }
   }

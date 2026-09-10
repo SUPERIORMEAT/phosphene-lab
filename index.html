@@ -969,16 +969,23 @@ function meshFromMask(inside,W,Hh,roundFrac,cov){
   if(x1<0) throw new Error('nothing to build');
   x0=Math.max(0,x0-2); y0=Math.max(0,y0-2); x1=Math.min(W-1,x1+2); y1=Math.min(Hh-1,y1+2);
   const CW=x1-x0+1, CH=y1-y0+1;
-  // Roundness is a fraction of the form's short side, not a pixel count. As a pixel
-  // count it meant a fat bevel on a 620 px glyph and a razor edge on a 2400 px logo,
-  // which is what made loaded logos look faceted.
-  const RND=Math.max(3,Math.round((roundFrac||0.084)*Math.min(CW,CH)));
+  // The bevel has to track the form's OWN thickness, not its bounding box. A logo of thin
+  // rings inside a big square got a bevel far wider than the rings, so the dome never
+  // rounded over: the strokes stayed low ridges and the grid showed through as terracing.
+  // Dmax is the half-thickness of the fattest part, so RND = Dmax makes that a half-round tube.
+  let Dmax=0, ink=0;
+  for(let y=y0;y<=y1;y++){const r=y*W;
+    for(let x=x0;x<=x1;x++){const v=D[r+x]; if(v>0){ ink++; if(v>Dmax) Dmax=v; }}}
+  const RND=Math.max(3,Math.round(((roundFrac||0.084)/0.084)*Dmax));
   const hAt=i=>{const t=Math.min(D[i]/RND,1);return Math.sqrt(Math.max(0,1-(1-t)*(1-t)));};
-  const GRID=560, MAXQ=200000;
+  const GRID=560, MAXQ=220000;
+  const inkFrac=Math.max(0.04,ink/(CW*CH));
   let STEP=Math.max(1,Math.round(Math.max(CW,CH)/GRID));
-  // the bevel must get enough samples across it, or its edge facets
-  STEP=Math.min(STEP,Math.max(1,Math.floor(RND/7)));
-  while((CW/STEP)*(CH/STEP)>MAXQ) STEP++;
+  // the bevel must get enough samples across it, or its surface terraces
+  STEP=Math.min(STEP,Math.max(1,Math.floor(RND/10)));
+  // cap on the quads actually emitted, not on the whole grid: a logo is mostly empty,
+  // and capping the grid was forcing a coarse step onto forms that had room to spare
+  while((CW/STEP)*(CH/STEP)*inkFrac>MAXQ) STEP++;
   const GX=Math.floor((CW-1)/STEP), GY=Math.floor((CH-1)/STEP);
   const sc=2/Math.max(CW,CH), TH=RND*sc*0.92;
   const pos=[],nor=[],idx=[];

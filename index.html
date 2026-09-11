@@ -227,7 +227,7 @@
   <p><b>It hears deep.</b> Two analysers run at once: one long window for the key and a 256-band spectrum, one short window for hits. Each ring of the field is a frequency band, low in the center and high at the edge. The waveform itself traces the mirror edges. Stereo balance tilts the field. A beat tracker makes the whole field swell on the pulse.</p>
   <p><b>Key is color.</b> The field finds the song's key and turns it into a hue on the circle of fifths. C is red. G is orange. D is yellow. A is green. E is cyan. B is blue. F♯ is violet. Some modes bend this toward their own palette.</p>
   <p><b>Modes.</b> Each is tuned to one state. <b>Sober</b> is for people who took nothing: it uses real illusions of the eye. <b>Cannabis</b>, <b>Psilocybin</b>, <b>LSD</b>, <b>DMT</b>, <b>MDMA</b> and <b>Ketamine</b> follow the shape of that state rather than fight it.</p>
-  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the accretion <b>a</b>, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Mandala</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
+  <p><b>A 3D file.</b> Press <b>Load .OBJ / .STL</b> in the shape row and choose a file. Wavefront <b>.obj</b> and <b>.stl</b> are read, binary or ASCII, and anything else is refused with a note rather than failing quietly. The mesh is drawn off screen every frame, and the field is refracted through its surface: the model's normals push the picture sideways and its depth swells or sinks it, so the kaleidoscope behaves as though it were lit through a glass version of your object. The model turns on its own and the bass drives how hard it bites. <b>Scroll to dolly</b>: the camera physically moves toward the object, so the perspective opens up as you get close, the way a dolly does. It is not a zoom, and the focal length never changes. <b>Load .PDF / .SVG / .PNG</b> takes a logo, renders it, and builds it as a rounded solid the same way. A flattened vector PDF works best. <b>Text</b> builds whatever you type into a rounded solid, in a choice of typefaces, and the <b>round</b> slider sets how soft its edges are. The other objects are built in: the full <b>accretion mark</b> whose two satellites orbit the ring exactly as they do on the website, the <b>a</b> alone, a trefoil <b>Knot</b>, an <b>Infinity</b> loop, <b>Concentric</b> rings, a <b>Mobius</b> strip, a a <b>Lotus</b>, a <b>Mandala</b>, a <b>Harmonic</b> standing wave, a <b>Klein</b> bottle, a <b>Supershape</b> and a <b>Torus</b>. <b>Drag to spin the object</b>, and it keeps turning when you let go.</p>
   <p><b>Shape.</b> The row under the modes folds the whole field onto a polygon or a star instead of a circle. It changes the geometry everything else is built on, so a square field and a round one read as different instruments.</p>
   <p><b>Depth</b> sets how long the trails hold. <b>Drift</b> sets how fast the field turns. <b>React</b> sets how hard the music moves the image: rings, edges, kicks, spin. <b>Bass</b> sets how far the low end bends the deep background: the trails and the far layer bend most, the front pattern less. <b>Spiral</b> twists the field into a vortex and draws it down into the center. Higher is faster. <b>Zoom</b> is the endless fall: the pattern is drawn in log-polar space, so the dive into the center never ends and never blurs.</p>
   <p><b>It follows the song.</b> A build, a drop and a breakdown are detected from the energy of the last sixteen seconds. On the drop the mirrors double, the spiral jumps and the color flips to its complement for a bar. Every eighth bar, time slows for two beats. Tonal passages flow, noisy ones fracture. The melody travels down the tunnel as a glowing thread. Old shapes fade into their complementary color, like real afterimages. A living skin, a reaction-diffusion system, breeds under the geometry with the bass and mids. Wide stereo pulls the two halves apart. Kicks split the colors for an instant.</p>
@@ -272,6 +272,7 @@ const SHAPES=[{k:'circle',label:'Circle',sides:0,star:0},{k:'tri',label:'Triangl
 const OBJECTS=[
  {k:'none',label:'None'},
  {k:'text',label:'Text',text:true},
+ {k:'mark',label:'accretion mark',gen:()=>meshAccretionMark()},
  {k:'a',label:'accretion a',gen:()=>meshAccretionA()},
  {k:'knot',label:'Knot',gen:()=>meshTorusKnot()},
  {k:'lotus',label:'Lotus',gen:()=>meshLotus()},
@@ -595,19 +596,28 @@ function measure(tex,dt){
 // A mesh is drawn off screen every frame into a normal+depth buffer. The field shader
 // samples that buffer and refracts through it, so the picture bends around the object.
 const MODEL_VS=`#version 300 es
-in vec3 aPos; in vec3 aNor;
+in vec3 aPos; in vec3 aNor; in float aOrbit;
 uniform mat3 uRot; uniform float uScale; uniform vec2 uAsp;
 uniform float uDolly;            // camera distance. Moving it is a dolly, not a zoom.
+uniform vec2 uPivot; uniform vec2 uOrb;   // uOrb.x turns satellite A, uOrb.y satellite B
 out vec3 vN; out float vZ;
 void main(){
-  vec3 q=uRot*aPos*uScale;
+  vec3 src=aPos; vec3 nrm=aNor;
+  if(aOrbit>0.5){
+    float ang = (aOrbit>1.5) ? uOrb.y : uOrb.x;
+    float c=cos(ang), sn=sin(ang);
+    vec2 d=src.xy-uPivot;
+    src.xy = uPivot + vec2(d.x*c - d.y*sn, d.x*sn + d.y*c);
+    nrm.xy = vec2(nrm.x*c - nrm.y*sn, nrm.x*sn + nrm.y*c);
+  }
+  vec3 q=uRot*src*uScale;
   vZ=q.z/max(uScale,1e-4);       // object depth, independent of the camera
   q.z-=uDolly;                   // camera sits at the origin looking down -Z
   const float n=.05, f=30., foc=2.414;   // 45 degree field of view
   float w=-q.z;
   float zc=((f+n)/(n-f))*q.z+(2.*f*n)/(n-f);
   gl_Position=vec4(q.x*foc*uAsp.x, q.y*foc*uAsp.y, zc, w);
-  vN=normalize(uRot*aNor);
+  vN=normalize(uRot*nrm);
 }`;
 const MODEL_FS=`#version 300 es
 precision highp float;
@@ -617,7 +627,7 @@ function programVF(vsSrc,fsSrc){
   const pr=gl.createProgram();
   gl.attachShader(pr,compile(gl.VERTEX_SHADER,vsSrc));
   gl.attachShader(pr,compile(gl.FRAGMENT_SHADER,fsSrc));
-  gl.bindAttribLocation(pr,0,'aPos'); gl.bindAttribLocation(pr,1,'aNor');
+  gl.bindAttribLocation(pr,0,'aPos'); gl.bindAttribLocation(pr,1,'aNor'); gl.bindAttribLocation(pr,2,'aOrbit');
   gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(pr));throw new Error('model link');}
   const u={};const n=gl.getProgramParameter(pr,gl.ACTIVE_UNIFORMS);
@@ -629,6 +639,8 @@ const modelProg=programVF(MODEL_VS,MODEL_FS);
 let modelVao=null,modelVbo=null,modelIbo=null,modelCount=0,hasModel=false,modelName='';
 let mFbo=null,mTex=null,mDepth=null,mW=0,mH=0,modelFloat=true,modelFbOk=false;
 let mrx=0,mry=0,dolly=3.2,dollyTarget=3.2,orbVx=0,orbVy=0,orbiting=false;
+// the website turns the pin dot every 4.6 s and the small ring every 7.6 s
+let satA=0,satB=0;
 
 function modelTargets(){
   // Full field resolution. The normals drive a displacement, so any softness here shows up
@@ -707,11 +719,34 @@ function meshTransform(m,tx,ty,tz,sx){
   return m;
 }
 function meshMerge(list){
-  const pos=[],nor=[],idx=[];
-  for(const m of list){const off=pos.length/3;
+  const pos=[],nor=[],idx=[],orb=[];
+  for(const m of list){const off=pos.length/3, n=m.pos.length/3, tag=m.orbitTag||0;
     for(let i=0;i<m.pos.length;i++){pos.push(m.pos[i]);nor.push(m.nor[i]);}
+    for(let i=0;i<n;i++)orb.push(tag || (m.orbit ? m.orbit[i] : 0));   // an explicit tag wins
     for(let i=0;i<m.idx.length;i++)idx.push(m.idx[i]+off);}
-  return {pos,nor,idx};
+  return {pos,nor,idx,orbit:orb};
+}
+// The full accretion.tv mark, taken from the real vector measurements, with the two
+// satellites tagged so the vertex shader can orbit them about the ring's centre exactly
+// as the website does: the pin dot every 4.6 s, the small ring every 7.6 s.
+function meshAccretionMark(){
+  const S=1/330, X=v=>(v-330)*S, Y=v=>-(v-330)*S;
+  const FAT=1.35;
+  const bowlR=(109.38+82.19)/2, bowlT=(109.38-82.19)/2*FAT;
+  const stemH=212.58, stemW=30.90*FAT;
+  const still=[
+    meshTransform(meshTorus(285.5*S, 9.75*S*FAT, 420, 34), X(330), Y(330), 0),        // orbit ring
+    meshTransform(meshTorus(bowlR*S, bowlT*S, 240, 30), X(325.67), Y(328.76), 0),     // bowl of the a
+    meshTransform(meshBox(stemW*S, stemH*S, bowlT*2.1*S), X(411.57+30.90/2), Y(222.47+stemH/2), 0),
+  ];
+  const satA=[ meshTransform(meshSphere(34.25*S, 36), X(407), Y(692), 0) ];           // the pin dot
+  const satB=[ meshTransform(meshTorus(75*S, 5.75*S*FAT, 220, 26), X(584), Y(669.5), 0) ];
+  const a=meshMerge(still); a.orbitTag=0;
+  const b=meshMerge(satA);  b.orbitTag=1;
+  const c=meshMerge(satB);  c.orbitTag=2;
+  const out=meshMerge([a,b,c]);
+  out.pivot=[X(330),Y(330),0];          // everything orbits the ring's centre
+  return out;
 }
 // The accretion.tv "a" on its own, taken from the real vector measurements
 // (viewBox 0 0 701 786; y is down in SVG, so it is negated here).
@@ -1095,18 +1130,23 @@ function uploadMesh(m,name){
     mnz=Math.min(mnz,m.pos[i+2]);mxz=Math.max(mxz,m.pos[i+2]);}
   const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,cz=(mnz+mxz)/2;
   const ext=Math.max(mxx-mnx,mxy-mny,mxz-mnz)||1, k=2/ext;
-  const inter=new Float32Array(m.pos.length*2);
-  for(let i=0,j=0;i<m.pos.length;i+=3,j+=6){
+  const nv=m.pos.length/3;
+  const inter=new Float32Array(nv*7);
+  for(let i=0,j=0,v=0;i<m.pos.length;i+=3,j+=7,v++){
     inter[j]=(m.pos[i]-cx)*k;inter[j+1]=(m.pos[i+1]-cy)*k;inter[j+2]=(m.pos[i+2]-cz)*k;
-    inter[j+3]=m.nor[i];inter[j+4]=m.nor[i+1];inter[j+5]=m.nor[i+2];}
+    inter[j+3]=m.nor[i];inter[j+4]=m.nor[i+1];inter[j+5]=m.nor[i+2];
+    inter[j+6]=m.orbit?m.orbit[v]:0;}
+  modelPivot = m.pivot ? [(m.pivot[0]-cx)*k,(m.pivot[1]-cy)*k,(m.pivot[2]-cz)*k] : [0,0,0];
+  modelHasOrbit = !!(m.orbit && m.orbit.some(t=>t>0));
   if(modelVao)gl.deleteVertexArray(modelVao);
   if(modelVbo)gl.deleteBuffer(modelVbo);
   if(modelIbo)gl.deleteBuffer(modelIbo);
   modelVao=gl.createVertexArray();gl.bindVertexArray(modelVao);
   modelVbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,modelVbo);
   gl.bufferData(gl.ARRAY_BUFFER,inter,gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
-  gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,28,0);
+  gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,28,12);
+  gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,1,gl.FLOAT,false,28,24);
   const big=(m.pos.length/3)>65535;
   const arr=big?new Uint32Array(m.idx):new Uint16Array(m.idx);
   modelIbo=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelIbo);
@@ -1116,7 +1156,7 @@ function uploadMesh(m,name){
   gl.bindVertexArray(quadVao);
   modelTargets();
 }
-let modelIdxType=null;
+let modelIdxType=null, modelPivot=[0,0,0], modelHasOrbit=false;
 
 // ---- file parsing ----
 function parseOBJ(txt){
@@ -1311,6 +1351,9 @@ function drawModel(dt,react){
   gl.uniformMatrix3fv(modelProg.u.uRot,false,R);
   gl.uniform1f(modelProg.u.uScale,0.62*(1+0.10*env[1]*react));
   gl.uniform1f(modelProg.u.uDolly,dolly);
+  satA+=dt*(Math.PI*2/4.6); satB+=dt*(Math.PI*2/7.6);
+  gl.uniform2f(modelProg.u.uPivot,modelPivot[0],modelPivot[1]);
+  gl.uniform2f(modelProg.u.uOrb,satA,satB);
   const asp=mW/mH;
   gl.uniform2f(modelProg.u.uAsp, asp>=1?1/asp:1, asp>=1?1:asp);
   gl.drawElements(gl.TRIANGLES,modelCount,modelIdxType,0);
@@ -1890,7 +1933,7 @@ window.PHOSPHENE={loadArrayBuffer:async ab=>{ensureCtx();buffer=await ctx.decode
         const av=px[(y*mW+x)*4+3];line+= (flt?av>.5:av>127) ? '#' : '.';}
       out.push(line);}
     return out.join('\n');},
-  get state(){return{mode,modeName,shapeName,objectName,modelFloat,modelFbOk,modelBuf:[mW,mH],sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,mrx,mry,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
+  get state(){return{mode,modeName,shapeName,objectName,satA,satB,orbitWired:!!(modelProg.u.uOrb&&modelProg.u.uPivot),modelHasOrbit,modelPivot,modelFloat,modelFbOk,modelBuf:[mW,mH],sides,star,hasModel,modelName,modelTris:modelCount/3,dolly,mrx,mry,playing,exposure,punch,snare,hat,beatCount,drop,flip,sparse,building,noisy,stereoW,timeScale,mel:melPts.length,melOk,melHue,lastDrop,sectionName,midiOn,hue,keyPc,keyConf,bpm,beatConf,env:Array.from(env),centroid,sym,pan,ripples:ripples.length,W,H,resScale,fps:1000/dtEma};}};
 requestAnimationFrame(frame);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestAnimationFrame(()=>{});});
 })();
